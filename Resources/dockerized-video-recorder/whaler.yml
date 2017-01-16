@@ -1,0 +1,27 @@
+services:
+    selenium-hub:
+        image: modera/selenium
+        volumes:
+            .: /mnt/tmp
+        cmd: .docker/selenium/hub.sh
+
+    selenium-node:
+        image: modera/selenium
+        volumes:
+            .: /mnt/tmp
+        cmd: .docker/selenium/node.sh -maxSession 5 -hub http://selenium-hub:4444
+
+    vr-ffmpeg-server:
+        wait: 30m
+        build: .docker/vr-ffmpeg-server
+        volumes:
+            .: /var/www
+        cmd: .docker/vr-ffmpeg-server/run.sh
+
+    vr-nginx:
+        web: 80
+        image: nginx:1.7.7
+        volumes:
+            .: /var/www
+            .docker/vr-nginx/nginx.conf: /etc/nginx/nginx.conf
+        cmd: nginx

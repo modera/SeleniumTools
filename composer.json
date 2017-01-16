@@ -1,0 +1,26 @@
+{
+    "name": "modera/selenium-tools",
+    "description": "Contains tools for running Selenium tests - multi-session tests, recording videos etc",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sergei Lissovski",
+            "email": "sergei.lissovski@modera.org"
+        }
+    ],
+    "require": {
+        "behat/mink": "^1.7",
+        "guzzlehttp/guzzle": "~6.2",
+        "phpunit/phpunit": "~3.0|~4.0|~5.0",
+        "facebook/webdriver": "~1.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modera\\Component\\SeleniumTools\\": ""
+        },
+        "exclude-from-classmap": [
+            "/Tests/"
+        ]
+    }
+}
