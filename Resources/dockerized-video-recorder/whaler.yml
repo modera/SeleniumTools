@@ -3,13 +3,13 @@ services:
         image: modera/selenium
         volumes:
             .: /mnt/tmp
-        cmd: .docker/selenium/hub.sh
+        cmd: -role hub
 
     selenium-node:
         image: modera/selenium
         volumes:
             .: /mnt/tmp
-        cmd: .docker/selenium/node.sh -maxSession 5 -hub http://selenium-hub:4444
+        cmd: -role node -maxSession 5 -hub http://selenium-hub:4444
 
     vr-ffmpeg-server:
         wait: 30m

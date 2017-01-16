@@ -99,7 +99,7 @@ class Server
         }
 
         $cmd = sprintf(
-            "tmux new-session -d -s %s 'ffmpeg -f x11grab -video_size 1920x1080 -i selenium:44 -codec:v libx264 -r 15 %s'",
+            "tmux new-session -d -s %s 'ffmpeg -f x11grab -video_size 1920x1080 -i selenium-node:44 -codec:v libx264 -r 15 %s'",
             $tmuxSessionName,
             $videoFilename
         );
