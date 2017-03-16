@@ -45,7 +45,7 @@ class Actor
     private $capabilities;
 
     /**
-     * @var Scenario
+     * @var TestHarness
      */
     private $scenario;
 
@@ -80,12 +80,12 @@ class Actor
      *                      to properly format execution logs and things like that
      * @param string $startUrl  A URL of default page that will be opened in a browser
      * @param array $capabilities
-     * @param Scenario $scenario  A scenario this actor belongs to
+     * @param TestHarness $scenario  A scenario this actor belongs to
      * @param callable|null $additionalArgumentsFactory  Optional callback that can be used to provide additional parameters
      *                                                   for a "callback" argument when "run" method is executed
      */
     public function __construct(
-        $name, $startUrl, array $capabilities, Scenario $scenario, callable $additionalArgumentsFactory = null
+        $name, $startUrl, array $capabilities, TestHarness $scenario, callable $additionalArgumentsFactory = null
     )
     {
         $this->name = $name;
@@ -108,6 +108,22 @@ class Actor
     }
 
     /**
+     * See BHR_* constants of this class.
+     *
+     * @param string $behaviour
+     */
+    public function disableBehaviour($behaviour)
+    {
+        $filtered = [];
+        foreach ($this->enabledBehaviours as $iteratedBehaviour) {
+            if ($behaviour != $iteratedBehaviour) {
+                $filtered[] = $iteratedBehaviour;
+            }
+        }
+        $this->enabledBehaviours = $filtered;
+    }
+
+    /**
      * @param string[] $behaviours
      *
      * @return Actor
@@ -120,7 +136,7 @@ class Actor
     }
 
     /**
-     * @return Scenario
+     * @return TestHarness
      */
     public function getScenario()
     {

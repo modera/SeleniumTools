@@ -35,7 +35,9 @@ class MJRBackendPageObject
      */
     public function typeInUsername($username)
     {
-        $this->driver->findElement(By::named(['field', 'User ID']))->sendKeys($username);
+        $el = $this->driver->findElement(By::named(['field', 'User ID']));
+        $el->clear();
+        $el->sendKeys($username);
     }
 
     /**
@@ -43,7 +45,9 @@ class MJRBackendPageObject
      */
     public function typeInPassword($password)
     {
-        $this->driver->findElement(By::named(['field', 'Password']))->sendKeys($password);
+        $el = $this->driver->findElement(By::named(['field', 'Password']));
+        $el->clear();
+        $el->sendKeys($password);
     }
 
     public function clickSignInButton()

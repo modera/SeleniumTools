@@ -9,7 +9,7 @@ use Selenium\Client;
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-class Scenario
+class TestHarness
 {
     /**
      * @var string
@@ -34,6 +34,11 @@ class Scenario
     private $capabilities;
 
     /**
+     * @var callable
+     */
+    private $additionalActorArgumentsFactory;
+
+    /**
      * @param string $name
      * @param array $capabilities
      * @param callable $additionalActorArgumentsFactory
@@ -50,7 +55,7 @@ class Scenario
      * @param string $startUrl
      * @param array $capabilities
      *
-     * @return Scenario
+     * @return TestHarness
      */
     public function addActor($actorName, $startUrl, array $capabilities = array())
     {
@@ -87,7 +92,7 @@ class Scenario
      * @param string $actorName
      * @param callable $callback
      *
-     * @return Scenario
+     * @return TestHarness
      */
     public function runAs($actorName, callable $callback)
     {
