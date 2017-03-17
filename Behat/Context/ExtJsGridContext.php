@@ -3,6 +3,8 @@
 namespace Modera\Component\SeleniumTools\Behat\Context;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Modera\Component\SeleniumTools\Actor;
+use Modera\Component\SeleniumTools\PageObjects\MJRBackendPageObject;
 use Modera\Component\SeleniumTools\Querying\By;
 use Modera\Component\SeleniumTools\Querying\ExtDeferredQueryHandler;
 
@@ -17,7 +19,7 @@ class ExtJsGridContext extends HarnessAwareContext
      */
     public function inGridDoubleClickColumnAtPosition($tid, $columnLabel, $position)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $position, $columnLabel) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $position, $columnLabel) {
             $js = <<<'JS'
 var grid = firstCmp;
 var column = grid.down("gridcolumn[text=%columnLabel%]");
@@ -39,7 +41,7 @@ JS;
      */
     public function iClickRowInGridWhoseColumnValueIs($tid, $columnLabel, $expectedColumnValue)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $columnLabel, $expectedColumnValue) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $columnLabel, $expectedColumnValue) {
             $js = <<<JS
 var grid = firstCmp;
 var view = grid.getView();
@@ -68,7 +70,7 @@ JS;
      */
     public function inGridThereMustBeNoRowWhoseColumnValueIs($tid, $columnLabel, $value)
     {
-        $this->getActiveActor()->run(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $columnLabel, $value) {
+        $this->runActiveActor(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $columnLabel, $value) {
             $js = <<<JS
 var grid = firstCmp;
 var column = grid.down('gridcolumn[text=%columnLabel%]');
@@ -103,7 +105,7 @@ JS;
     {
         $isFound = false;
 
-        $this->getActiveActor()->run(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedValue, &$isFound) {
+        $this->runActiveActor(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedValue, &$isFound) {
             $js = <<<'JS'
 var grid = firstCmp;
 var store = grid.getStore();
@@ -133,7 +135,7 @@ JS;
      */
     public function inGridIClickARowWhichContainsPieceOfText($tid, $expectedText)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText) {
             $js = <<<'JS'
 var grid = firstCmp;
 var view = grid.getView();
@@ -172,7 +174,7 @@ JS;
      */
     public function inGridIClickRowAtPosition($tid, $position)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $position) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $position) {
             $js = <<<'JS'
 var grid = firstCmp;
 var view = grid.getView();
@@ -192,7 +194,7 @@ JS;
      */
     public function inGridIClickCellWhereOneOfTheCellsContainPieceOfText($tid, $columnLabel, $expectedText)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $columnLabel) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $columnLabel) {
             $js = <<<'JS'
 var grid = firstCmp;
 var view = grid.getView();
@@ -226,7 +228,7 @@ JS;
      */
     public function gridMustContainAtLeastNRows($tid, $rowsCount)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $rowsCount) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $rowsCount) {
             $query = "grid[tid=$tid]";
 
             assertGreaterThanOrEqual($rowsCount, $q->runWhenComponentAvailable($query, 'return firstCmp.getStore().getCount();'));
@@ -238,7 +240,7 @@ JS;
      */
     public function gridMustContainRows($tid, $rowsCount)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $rowsCount) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $rowsCount) {
             $query = "grid[tid=$tid]";
 
             assertEquals($rowsCount, $q->runWhenComponentAvailable($query, 'return firstCmp.getStore().getCount();'));

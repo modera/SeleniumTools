@@ -42,7 +42,7 @@ class Actor
     /**
      * @var array
      */
-    private $capabilities;
+    private $behaviours;
 
     /**
      * @var TestHarness
@@ -79,18 +79,18 @@ class Actor
      * @param string $name  A name that represents this user, like "admin". This name later can be used by listeners
      *                      to properly format execution logs and things like that
      * @param string $startUrl  A URL of default page that will be opened in a browser
-     * @param array $capabilities
+     * @param array $behaviours
      * @param TestHarness $scenario  A scenario this actor belongs to
      * @param callable|null $additionalArgumentsFactory  Optional callback that can be used to provide additional parameters
      *                                                   for a "callback" argument when "run" method is executed
      */
     public function __construct(
-        $name, $startUrl, array $capabilities, TestHarness $scenario, callable $additionalArgumentsFactory = null
+        $name, $startUrl, array $behaviours, TestHarness $scenario, callable $additionalArgumentsFactory = null
     )
     {
         $this->name = $name;
         $this->startUrl = $startUrl;
-        $this->capabilities = $capabilities;
+        $this->behaviours = $behaviours;
         $this->scenario = $scenario;
         $this->additionalArgumentsFactory = $additionalArgumentsFactory;
     }
@@ -233,7 +233,7 @@ class Actor
         try {
             return RemoteWebDriver::create(
                 $host,
-                $this->capabilities,
+                $this->behaviours,
                 $this->resolveConfigValue('SELENIUM_CONNECTION_TIMEOUT', 30 * 1000),
                 $this->resolveConfigValue('SELENIUM_REQUEST_TIMEOUT', 15 * 10000)
             );

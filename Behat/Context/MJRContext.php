@@ -26,7 +26,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function iAmOnASection()
     {
-        $this->getActiveActor()->run(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) {
+        $this->runActiveActor(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) {
             $q->runWhenComponentAvailable('modera-backdashboard-dashboardpanel', 'return true;');
         });
     }
@@ -36,7 +36,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function itIsProgramaticallyEmulatedThatMySessionIsExpired()
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin) {
+        $this->runActiveActor(function(RemoteWebDriver $admin) {
             $admin->executeScript("ModeraFoundation.getApplication().getContainer().get('security_manager').logout(Ext.emptyFn);");
 
             sleep(1);
@@ -50,7 +50,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function iNavigateToSection($section)
     {
-        $this->getActiveActor()->run(function($admin, $actor, MJRBackendPageObject $backend) use($section) {
+        $this->runActiveActor(function($admin, $actor, MJRBackendPageObject $backend) use($section) {
             $backend->clickMenuItemWithLabel($section);
 
             sleep(1);
@@ -62,7 +62,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function iClickOnSectionInToolsView($section)
     {
-        $this->getActiveActor()->run(function($admin, $actor, MJRBackendPageObject $backend) use($section) {
+        $this->runActiveActor(function($admin, $actor, MJRBackendPageObject $backend) use($section) {
             $backend->clickToolsSectionWithLabel($section);
 
             sleep(1);
@@ -74,7 +74,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function aSessionExpiredNotificationModalWindowMustBePresentedTOAUser()
     {
-        $this->getActiveActor()->run(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) {
+        $this->runActiveActor(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) {
             $q->runWhenComponentAvailable('window[tid=authRequiredWindow]');
         });
     }
@@ -84,7 +84,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function iClickOnCloseButtonInTheSessionExpiredNotificationWindow()
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
             $button = $q->extComponentDomId('window[tid=authRequiredWindow] component[tid=closeWindowBtn]');
 
             $admin->findElement($button)->click();
@@ -98,7 +98,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function theAPageMustBeReloadedAndInitialLoginPageMustBeDisplayed()
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
             assertNull($admin->executeScript("ModeraFoundation.getApplication().getContainer().get('security_context').getUser()"));
         });
     }
@@ -108,7 +108,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function iClickCloseOkButtonInTheWindow()
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
             $button = $q->extComponentDomId('window[tid=authRequiredWindow] component[tid=closeWindowBtn]');
 
             $admin->findElement($button)->click();
@@ -122,7 +122,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function windowIsNoLongerDisplayed()
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
             assertNull($admin->executeScript('Ext.ComponentQuery.query("window[tid=authRequiredWindow]")[0]'));
         });
     }
@@ -132,7 +132,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function iClickOnLoginButtonInTheWindow()
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
             $button = $q->extComponentDomId('window[tid=authRequiredWindow] component[tid=loginBtn]');
 
             $admin->findElement($button)->click();
@@ -159,7 +159,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function viewIsVisible($tid)
     {
-        $this->getActiveActor()->run(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid) {
+        $this->runActiveActor(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid) {
             $q->waitUntilComponentAvailable("component[tid=$tid]");
 
             sleep(1);
@@ -187,7 +187,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function iClickElementOfType($componentType, $tid)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($componentType, $tid) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($componentType, $tid) {
             $button = $q->extComponentDomId("{$componentType}[tid=$tid]");
 
             $admin->findElement($button)->click();
@@ -209,7 +209,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function iClickHeaderWithTextInAGrid($text, $tid)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($text, $tid) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($text, $tid) {
             $column = $q->extComponentDomId("grid[tid=$tid] gridcolumn[text=$text]");
 
             $admin->findElement($column)->click();
@@ -223,7 +223,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function gridColumnValueMustBe($tid, $position, $columnLabel, $expectedValue)
     {
-        $this->getActiveActor()->run(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $position, $columnLabel, $expectedValue) {
+        $this->runActiveActor(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $position, $columnLabel, $expectedValue) {
             $dataIndex = $q->runWhenComponentAvailable("grid[tid=$tid] gridcolumn[text=$columnLabel]", 'return firstCmp.dataIndex');
 
             assertNotNull($dataIndex);
@@ -246,7 +246,7 @@ class MJRContext extends HarnessAwareContext
      */
     public function iTypeTextInField($text, $tid)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($text, $tid) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($text, $tid) {
             // We cannot simply query by $tid, because it returns HTML <table> element instead of <input> that we need
             $js = <<<'JS'
     var fieldDomId = firstCmp.el.dom.id;
@@ -290,7 +290,7 @@ JS;
      */
     public function iClearTextInField($tid)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid) {
             // We cannot simply query by $tid, because it returns HTML <table> element instead of <input> that we need
             $js = <<<'JS'
     var fieldDomId = firstCmp.el.dom.id;
@@ -324,7 +324,7 @@ JS;
      */
     public function iRefreshThenPage()
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin) {
+        $this->runActiveActor(function(RemoteWebDriver $admin) {
             $admin->executeScript('window.location.reload();');
             sleep(1);
         });
@@ -335,7 +335,7 @@ JS;
      */
     public function iSeePieceOfText($text)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin) use($text) {
+        $this->runActiveActor(function(RemoteWebDriver $admin) use($text) {
             assertContains($text, $admin->getPageSource());
         });
     }
@@ -346,7 +346,8 @@ JS;
      */
     public function iAuthenticateAs($username, $password)
     {
-        $this->getActor($username)->run(function($admin, $actor, MJRBackendPageObject $backend) use($username, $password) {
+        $this->switchActor($username);
+        $this->runActiveActor(function($admin, $actor, MJRBackendPageObject $backend) use($username, $password) {
             $backend->login($username, $password);
 
             sleep(1);
@@ -377,7 +378,7 @@ JS;
 
     private function isActorAuthenticated($isAuthenticatedCallback)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin) use($isAuthenticatedCallback) {
+        $this->runActiveActor(function(RemoteWebDriver $admin) use($isAuthenticatedCallback) {
             $js = <<<JS
 var done = arguments[arguments.length-1],
     sm = ModeraFoundation.getApplication().getContainer().get('security_manager');
@@ -407,7 +408,7 @@ JS;
      */
     public function iExpandMenuForButton($tid)
     {
-        $this->getActiveActor()->run(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid) {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid) {
             $js = <<<JS
 var button = firstCmp;
 

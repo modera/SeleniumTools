@@ -46,10 +46,7 @@ class TestHarnessFactory
 
         $harness = new TestHarness(
             $harnessName,
-            array(WebDriverCapabilityType::BROWSER_NAME => $harnessConfig['browser']),
-            function(RemoteWebDriver $driver) {
-                return [new MJRBackendPageObject($driver), new ExtDeferredQueryHandler($driver)];
-            }
+            array(WebDriverCapabilityType::BROWSER_NAME => $harnessConfig['browser'])
         );
 
         foreach ($harnessConfig['actors'] as $name => $actorConfig) {

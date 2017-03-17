@@ -3,12 +3,18 @@
 namespace Modera\Component\SeleniumTools\Behat\Context;
 
 use Behat\Behat\Context\Context;
+use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Modera\Component\SeleniumTools\Actor;
 use Modera\Component\SeleniumTools\Behat\HarnessAwareContextInterface;
 use Modera\Component\SeleniumTools\Behat\TestHarnessFactory;
+use Modera\Component\SeleniumTools\PageObjects\MJRBackendPageObject;
+use Modera\Component\SeleniumTools\Querying\ExtDeferredQueryHandler;
 use Modera\Component\SeleniumTools\TestHarness;
 
 /**
+ * Provides baseline integration with TestHarness, allows to run scenarios which involve several actors (the class
+ * still can be used when you need to run single-actor scenario as well).
+ *
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
@@ -23,6 +29,8 @@ class HarnessAwareContext implements Context, HarnessAwareContextInterface
      * Marked as static because active actor state needs to be shared between Context (because an actor
      * can become active in one context, but later some other functions will rely on it from other
      * context).
+     *
+     * @see \Modera\Component\SeleniumTools\Behat\Context\MJRContext::sessionIsSwitchedTo
      *
      * @var Actor
      */
@@ -48,6 +56,7 @@ class HarnessAwareContext implements Context, HarnessAwareContextInterface
     public function onBeforeScenario()
     {
         if (!$this->harness) {
+            // See acceptHarnessFactory()
             $this->harness = $this->harnessFactory->createHarness('default');
         }
 
@@ -102,5 +111,15 @@ class HarnessAwareContext implements Context, HarnessAwareContextInterface
         }
 
         return self::$activeActor;
+    }
+
+    /**
+     * @param callable $callback
+     */
+    protected function runActiveActor(callable $callback)
+    {
+        $this->getActiveActor()->run(function(RemoteWebDriver $admin, Actor $actor) use($callback) {
+            $callback($admin, $actor, new MJRBackendPageObject($admin), new ExtDeferredQueryHandler($admin));
+        });
     }
 }
