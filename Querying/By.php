@@ -6,7 +6,6 @@ use Behat\Mink\Selector\NamedSelector;
 use Facebook\WebDriver\WebDriverBy;
 
 /**
- *
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
@@ -30,7 +29,7 @@ class By extends WebDriverBy
     }
 
     /**
-     * Convertes given CSS $selector to XPath
+     * Converts given CSS $selector to XPath
      *
      * @param string $selector
      * 

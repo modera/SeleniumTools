@@ -20,6 +20,9 @@ class MJRBackendPageObject
      */
     private $driver;
 
+    /**
+     * @var ExtDeferredQueryHandler
+     */
     private $deferredQueryHandler;
 
     /**

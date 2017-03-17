@@ -47,7 +47,7 @@ class Actor
     /**
      * @var TestHarness
      */
-    private $scenario;
+    private $harness;
 
     /**
      * @var RemoteWebDriver
@@ -80,18 +80,18 @@ class Actor
      *                      to properly format execution logs and things like that
      * @param string $startUrl  A URL of default page that will be opened in a browser
      * @param array $behaviours
-     * @param TestHarness $scenario  A scenario this actor belongs to
+     * @param TestHarness $harness  A test harness this actor belongs to
      * @param callable|null $additionalArgumentsFactory  Optional callback that can be used to provide additional parameters
      *                                                   for a "callback" argument when "run" method is executed
      */
     public function __construct(
-        $name, $startUrl, array $behaviours, TestHarness $scenario, callable $additionalArgumentsFactory = null
+        $name, $startUrl, array $behaviours, TestHarness $harness, callable $additionalArgumentsFactory = null
     )
     {
         $this->name = $name;
         $this->startUrl = $startUrl;
         $this->behaviours = $behaviours;
-        $this->scenario = $scenario;
+        $this->harness = $harness;
         $this->additionalArgumentsFactory = $additionalArgumentsFactory;
     }
 
@@ -124,6 +124,8 @@ class Actor
     }
 
     /**
+     * @see BHR_* constants
+     *
      * @param string[] $behaviours
      *
      * @return Actor
@@ -138,9 +140,9 @@ class Actor
     /**
      * @return TestHarness
      */
-    public function getScenario()
+    public function getHarness()
     {
-        return $this->scenario;
+        return $this->harness;
     }
 
     /**
@@ -164,13 +166,13 @@ class Actor
     }
 
     /**
-     * @param int $notifyDelay
+     * @param int $ackDelay
      */
-    public function focus($notifyDelay = 0)
+    public function focus($ackDelay = 0)
     {
         $this->getDriver()->executeScript("alert('I am $this->name.');");
-        if ($notifyDelay > 0) {
-            sleep($notifyDelay);
+        if ($ackDelay > 0) {
+            sleep($ackDelay);
         }
 
         $this->getDriver()->switchTo()->alert()->accept();
@@ -197,7 +199,7 @@ class Actor
         if ($this->additionalArgumentsFactory && count($this->additionalArguments) == 0) {
             $this->additionalArguments = call_user_func_array(
                 $this->additionalArgumentsFactory,
-                [$this->getDriver(), $this, $this->scenario]
+                [$this->getDriver(), $this, $this->harness]
             );
         }
 
@@ -206,12 +208,13 @@ class Actor
             // it takes about a second for a browser to be maximized and its UI properly redrawn
             sleep(1);
         }
-        if ($this->isBehaviourEnabled(self::BHR_AUTO_FOCUS)) {
+        if ($this->isBehaviourEnabled(self::BHR_AUTO_FOCUS) && $this->isExcessiveFocusingAvoided()) {
             $this->focus(1);
         }
 
         $args = array_merge([$this->driver, $this], $this->additionalArguments);
 
+        $this->harness->setActiveActor($this);
         try {
             call_user_func_array($callback, $args);
         } catch (\Exception $e) {
@@ -221,6 +224,11 @@ class Actor
         }
 
         return $this;
+    }
+
+    private function isExcessiveFocusingAvoided()
+    {
+        return !$this->harness->isActorActive($this);
     }
 
     /**

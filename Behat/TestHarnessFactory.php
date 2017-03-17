@@ -51,9 +51,6 @@ class TestHarnessFactory
 
         foreach ($harnessConfig['actors'] as $name => $actorConfig) {
             $harness->addActor($name, $actorConfig['base_url']);
-
-            $actor = $harness->getActor($name);
-            $actor->disableBehaviour(Actor::BHR_AUTO_FOCUS);
         }
 
         return $harness;
