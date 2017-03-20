@@ -42,12 +42,12 @@ class Actor
     /**
      * @var array
      */
-    private $capabilities;
+    private $webDriverCapabilities;
 
     /**
-     * @var Scenario
+     * @var TestHarness
      */
-    private $scenario;
+    private $harness;
 
     /**
      * @var RemoteWebDriver
@@ -76,23 +76,40 @@ class Actor
     ];
 
     /**
+     * @var ActorBrowserController
+     */
+    private $controller;
+
+    /**
      * @param string $name  A name that represents this user, like "admin". This name later can be used by listeners
      *                      to properly format execution logs and things like that
      * @param string $startUrl  A URL of default page that will be opened in a browser
-     * @param array $capabilities
-     * @param Scenario $scenario  A scenario this actor belongs to
+     * @param array $webDriverCapabilities
+     * @param TestHarness $harness  A test harness this actor belongs to
      * @param callable|null $additionalArgumentsFactory  Optional callback that can be used to provide additional parameters
      *                                                   for a "callback" argument when "run" method is executed
      */
     public function __construct(
-        $name, $startUrl, array $capabilities, Scenario $scenario, callable $additionalArgumentsFactory = null
+        $name,
+        $startUrl,
+        TestHarness $harness,
+        array $webDriverCapabilities = [],
+        callable $additionalArgumentsFactory = null
     )
     {
         $this->name = $name;
         $this->startUrl = $startUrl;
-        $this->capabilities = $capabilities;
-        $this->scenario = $scenario;
+        $this->webDriverCapabilities = $webDriverCapabilities;
+        $this->harness = $harness;
         $this->additionalArgumentsFactory = $additionalArgumentsFactory;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStartUrl()
+    {
+        return $this->startUrl;
     }
 
     /**
@@ -108,6 +125,36 @@ class Actor
     }
 
     /**
+     * @param string $behaviour
+     */
+    public function enableBehaviour($behaviour)
+    {
+        if (!in_array($behaviour, $this->enabledBehaviours)) {
+            $this->enabledBehaviours[] = $behaviour;
+        }
+
+        return $this->enabledBehaviours;
+    }
+
+    /**
+     * See BHR_* constants of this class.
+     *
+     * @param string $behaviour
+     */
+    public function disableBehaviour($behaviour)
+    {
+        $filtered = [];
+        foreach ($this->enabledBehaviours as $iteratedBehaviour) {
+            if ($behaviour != $iteratedBehaviour) {
+                $filtered[] = $iteratedBehaviour;
+            }
+        }
+        $this->enabledBehaviours = $filtered;
+    }
+
+    /**
+     * @see BHR_* constants
+     *
      * @param string[] $behaviours
      *
      * @return Actor
@@ -120,11 +167,11 @@ class Actor
     }
 
     /**
-     * @return Scenario
+     * @return TestHarness
      */
-    public function getScenario()
+    public function getHarness()
     {
-        return $this->scenario;
+        return $this->harness;
     }
 
     /**
@@ -133,6 +180,16 @@ class Actor
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * @internal
+     *
+     * @return bool
+     */
+    public function isDriverCreated()
+    {
+        return null !== $this->driver;
     }
 
     /**
@@ -148,13 +205,13 @@ class Actor
     }
 
     /**
-     * @param int $notifyDelay
+     * @param int $ackDelay
      */
-    public function focus($notifyDelay = 0)
+    public function focus($ackDelay = 0)
     {
         $this->getDriver()->executeScript("alert('I am $this->name.');");
-        if ($notifyDelay > 0) {
-            sleep($notifyDelay);
+        if ($ackDelay > 0) {
+            sleep($ackDelay);
         }
 
         $this->getDriver()->switchTo()->alert()->accept();
@@ -168,8 +225,10 @@ class Actor
      */
     public function run(callable $callback)
     {
-        if (!$this->driver && $this->isBehaviourEnabled(self::BHR_AUTO_START)) {
-            $this->getDriver()->get($this->startUrl);
+        $ctr = $this->getController();
+
+        if (!$this->isDriverCreated() && $ctr->doesBrowserNeedToBeLaunchedAutomatically()) {
+            $ctr->launchBrowser($this->startUrl);
         }
 
         if (!$this->driver) {
@@ -178,24 +237,23 @@ class Actor
             ));
         }
 
-        if ($this->additionalArgumentsFactory && count($this->additionalArguments) == 0) {
-            $this->additionalArguments = call_user_func_array(
-                $this->additionalArgumentsFactory,
-                [$this->getDriver(), $this, $this->scenario]
-            );
+        if ($ctr->doesBrowserWindowNeedToBeMaximized()) {
+            $ctr->maximizeBrowser();
         }
 
-        if ($this->isBehaviourEnabled(self::BHR_AUTO_MAXIMIZE)) {
-            $this->getDriver()->manage()->window()->maximize();
-            // it takes about a second for a browser to be maximized and its UI properly redrawn
-            sleep(1);
-        }
-        if ($this->isBehaviourEnabled(self::BHR_AUTO_FOCUS)) {
+        if ($ctr->isFocusingNeeded()) {
             $this->focus(1);
         }
 
+        if ($this->additionalArgumentsFactory && count($this->additionalArguments) == 0) {
+            $this->additionalArguments = call_user_func_array(
+                $this->additionalArgumentsFactory,
+                [$this->getDriver(), $this, $this->harness]
+            );
+        }
         $args = array_merge([$this->driver, $this], $this->additionalArguments);
 
+        $this->harness->setActiveActor($this);
         try {
             call_user_func_array($callback, $args);
         } catch (\Exception $e) {
@@ -208,27 +266,42 @@ class Actor
     }
 
     /**
-     * @return RemoteWebDriver
+     * @internal
+     *
+     * @return ActorBrowserController
      */
-    protected function createDriver()
+    protected function getController()
     {
-        $host = $this->resolveConfigValue('SELENIUM_HOST', 'http://localhost:4444/wd/hub');
-
-        try {
-            return RemoteWebDriver::create(
-                $host,
-                $this->capabilities,
-                $this->resolveConfigValue('SELENIUM_CONNECTION_TIMEOUT', 30 * 1000),
-                $this->resolveConfigValue('SELENIUM_REQUEST_TIMEOUT', 15 * 10000)
-            );
-        } catch (\Exception $e) {
-            throw new ActorExecutionException(
-                sprintf('Actor "%s" was unable to establish connection with Selenium using host "%s".', $this->name, $host),
-                null,
-                $e
-            );
+        if (!$this->controller) {
+            $this->controller = new ActorBrowserController($this);
         }
 
+        return $this->controller;
+    }
+
+    protected function createDriver()
+    {
+        $config = array(
+            'host' => $this->resolveConfigValue('SELENIUM_HOST', 'http://localhost:4444/wd/hub'),
+            'connection_timeout' => $this->resolveConfigValue('SELENIUM_CONNECTION_TIMEOUT', 30 * 1000),
+            'request_timeout' => $this->resolveConfigValue('SELENIUM_REQUEST_TIMEOUT', 15 * 10000)
+        );
+
+        try {
+            return $this->createDriverInstance($config['host'], $config['connection_timeout'], $config['request_timeout']);
+        } catch (\Exception $e) {
+            $msg = sprintf(
+                'Actor "%s" was unable to establish connection with Selenium: "%s".',
+                $this->name, $e->getMessage()
+            );
+
+            throw new ActorExecutionException($msg, null, $e);
+        }
+    }
+
+    protected function createDriverInstance($host, $connectionTimeout, $requestTimeout)
+    {
+        return RemoteWebDriver::create($host, $this->webDriverCapabilities, $connectionTimeout, $requestTimeout);
     }
 
     /**

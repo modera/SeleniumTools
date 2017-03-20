@@ -1,6 +1,6 @@
 <?php
 
-namespace Modera\Component\SeleniumTools\Tests\VideoRecording\FFMPEGServer;
+namespace Modera\Component\SeleniumTools\Tests\Unit\VideoRecording\FFMPEGServer;
 
 use Modera\Component\SeleniumTools\VideoRecording\FFMPEGServer\Server;
 

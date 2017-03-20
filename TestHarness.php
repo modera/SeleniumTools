@@ -9,7 +9,7 @@ use Selenium\Client;
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-class Scenario
+class TestHarness
 {
     /**
      * @var string
@@ -22,45 +22,74 @@ class Scenario
     private $actors = array();
 
     /**
+     * Can be used to share data between actors.
+     *
      * @var array
      */
     private $context = array();
 
     /**
-     * Capabilities that are shared by all associated actors if it is not overridden per-actor.
+     * These are shared by all associated actors if it is not overridden per-actor.
      *
      * @var array
      */
-    private $capabilities;
+    private $defaultWebDriverCapabilities;
+
+    /**
+     * @var callable
+     */
+    private $additionalActorArgumentsFactory;
+
+    /**
+     * An actor that is pefrorming actions as of now.
+     *
+     * @var Actor
+     */
+    private $activeActor;
 
     /**
      * @param string $name
-     * @param array $capabilities
+     * @param array $defaultWebDriverCapabilities
      * @param callable $additionalActorArgumentsFactory
      */
-    public function __construct($name, array $capabilities, callable $additionalActorArgumentsFactory = null)
+    public function __construct(
+        $name, array $defaultWebDriverCapabilities = [], callable $additionalActorArgumentsFactory = null
+    )
     {
         $this->name = $name;
-        $this->capabilities = $capabilities;
+        $this->defaultWebDriverCapabilities = $defaultWebDriverCapabilities;
         $this->additionalActorArgumentsFactory = $additionalActorArgumentsFactory;
     }
 
     /**
      * @param string $actorName
      * @param string $startUrl
-     * @param array $capabilities
+     * @param array $webDriverCapabilities  See Actor::BHR_* constants
      *
-     * @return Scenario
+     * @return TestHarness
      */
-    public function addActor($actorName, $startUrl, array $capabilities = array())
+    public function addActor($actorName, $startUrl, array $webDriverCapabilities = array())
     {
-        if (count($capabilities) == 0) {
-            $capabilities = $this->capabilities;
+        if (count($webDriverCapabilities) == 0) {
+            $webDriverCapabilities = $this->defaultWebDriverCapabilities;
         }
 
         $this->actors[$actorName] = new Actor(
-            $actorName, $startUrl, $capabilities, $this, $this->additionalActorArgumentsFactory
+            $actorName, $startUrl, $this, $webDriverCapabilities, $this->additionalActorArgumentsFactory
         );
+
+        return $this;
+    }
+
+    /**
+     * @param string $actorName
+     * @param Actor $actor
+     *
+     * @return TestHarness
+     */
+    public function addActorInstance($actorName, Actor $actor)
+    {
+        $this->actors[$actorName] = $actor;
 
         return $this;
     }
@@ -87,7 +116,7 @@ class Scenario
      * @param string $actorName
      * @param callable $callback
      *
-     * @return Scenario
+     * @return TestHarness
      */
     public function runAs($actorName, callable $callback)
     {
@@ -103,6 +132,36 @@ class Scenario
         }
 
         $this->context = array();
+    }
+
+    /**
+     * @return Actor
+     */
+    public function getActiveActor()
+    {
+        return $this->activeActor;
+    }
+
+    /**
+     * @internal
+     *
+     * @param Actor $activeActor
+     */
+    public function setActiveActor(Actor $activeActor)
+    {
+        $this->activeActor = $activeActor;
+    }
+
+    /**
+     * @iternal
+     *
+     * @param Actor $actor
+     *
+     * @return bool
+     */
+    public function isActorActive(Actor $actor)
+    {
+        return $this->activeActor === $actor;
     }
 
     // context:

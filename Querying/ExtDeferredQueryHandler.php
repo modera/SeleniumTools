@@ -62,14 +62,25 @@ class ExtDeferredQueryHandler
      *
      * @param string $query  ExtJS Ext.ComponentQuery.query() compatible query
      * @param string $stmt  A JavaScript statement that needs to be executed when at least one component is returned by
-     *                      the $query. You can access to returned components using "result" variable.
+     *                      the $query. You can access to returned components using "result" variable. NB! In order
+     *                      to terminate execution of the javascript method successfully you need to return
+     *                      that the $stmt would return TRUE.
      * @param int $timeout  Maximum wait time for at least one component to become available
      *
      * @return string
      */
-    public function runWhenComponentAvailable($query, $stmt, $timeout = 30)
+    public function runWhenComponentAvailable($query, $stmt = 'return true;', $timeout = 30)
     {
         return $this->doRunWhenComponentAvailable($query, $stmt, time(), $timeout);
+    }
+
+    /**
+     * @param string $query
+     * @param int $timeout
+     */
+    public function waitUntilComponentAvailable($query, $timeout = 30)
+    {
+        $this->runWhenComponentAvailable($query, 'return true;', $timeout);
     }
 
     /**
@@ -131,8 +142,17 @@ JST;
         // we are returning a 'false' as a string instead
         $js = <<<'JST'
 %function_name% = function () {
-    var result = Ext.ComponentQuery.query("%query%");
+    var result = [];
+    var components = Ext.ComponentQuery.query("%query%");
+    Ext.each(components, function(component) {
+        if (component.isVisible(true)) {
+            result.push(component);
+        }
+    });
+    
     if (result.length > 0) {
+        var firstCmp = result[0];
+        
         %stmt%
     }
     
