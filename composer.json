@@ -10,6 +10,7 @@
         }
     ],
     "require": {
+        "php": ">=5.5.9",
         "behat/mink": "^1.7",
         "guzzlehttp/guzzle": "~6.2",
         "phpunit/phpunit": "~3.0|~4.0|~5.0",

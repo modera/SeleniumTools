@@ -1,6 +1,6 @@
 <?php
 
-namespace Modera\Component\SeleniumTools\Tests\Behat;
+namespace Modera\Component\SeleniumTools\Tests\Unit\Behat;
 
 use Behat\Behat\Context\Context;
 use Modera\Component\SeleniumTools\Behat\HarnessAwareContextInterface;

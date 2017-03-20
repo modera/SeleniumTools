@@ -29,11 +29,11 @@ class TestHarness
     private $context = array();
 
     /**
-     * Behaviours that are shared by all associated actors if it is not overridden per-actor.
+     * These are shared by all associated actors if it is not overridden per-actor.
      *
      * @var array
      */
-    private $behaviours;
+    private $defaultWebDriverCapabilities;
 
     /**
      * @var callable
@@ -41,7 +41,7 @@ class TestHarness
     private $additionalActorArgumentsFactory;
 
     /**
-     * An actor that is pefroming actions as of now.
+     * An actor that is pefrorming actions as of now.
      *
      * @var Actor
      */
@@ -49,31 +49,33 @@ class TestHarness
 
     /**
      * @param string $name
-     * @param array $capabilities
+     * @param array $defaultWebDriverCapabilities
      * @param callable $additionalActorArgumentsFactory
      */
-    public function __construct($name, array $capabilities, callable $additionalActorArgumentsFactory = null)
+    public function __construct(
+        $name, array $defaultWebDriverCapabilities = [], callable $additionalActorArgumentsFactory = null
+    )
     {
         $this->name = $name;
-        $this->behaviours = $capabilities;
+        $this->defaultWebDriverCapabilities = $defaultWebDriverCapabilities;
         $this->additionalActorArgumentsFactory = $additionalActorArgumentsFactory;
     }
 
     /**
      * @param string $actorName
      * @param string $startUrl
-     * @param array $behaviours  See Actor::BHR_* constants
+     * @param array $webDriverCapabilities  See Actor::BHR_* constants
      *
      * @return TestHarness
      */
-    public function addActor($actorName, $startUrl, array $behaviours = array())
+    public function addActor($actorName, $startUrl, array $webDriverCapabilities = array())
     {
-        if (count($behaviours) == 0) {
-            $behaviours = $this->behaviours;
+        if (count($webDriverCapabilities) == 0) {
+            $webDriverCapabilities = $this->defaultWebDriverCapabilities;
         }
 
         $this->actors[$actorName] = new Actor(
-            $actorName, $startUrl, $behaviours, $this, $this->additionalActorArgumentsFactory
+            $actorName, $startUrl, $this, $webDriverCapabilities, $this->additionalActorArgumentsFactory
         );
 
         return $this;
