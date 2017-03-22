@@ -3,9 +3,10 @@
 namespace Modera\Component\SeleniumTools;
 
 use Modera\Component\SeleniumTools\Exceptions\NoSuchActorException;
-use Selenium\Client;
 
 /**
+ * A component that is responsible for orchestrating multi-actors testing sessions.
+ *
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
@@ -41,11 +42,16 @@ class TestHarness
     private $additionalActorArgumentsFactory;
 
     /**
-     * An actor that is pefrorming actions as of now.
+     * An actor that is performing actions as of now.
      *
      * @var Actor
      */
     private $activeActor;
+
+    /**
+     * @var callable
+     */
+    private $driverFactory;
 
     /**
      * @param string $name
@@ -92,6 +98,16 @@ class TestHarness
         $this->actors[$actorName] = $actor;
 
         return $this;
+    }
+
+    /**
+     * @param string $actorName
+     *
+     * @return bool
+     */
+    public function hasActor($actorName)
+    {
+        return isset($this->actors[$actorName]);
     }
 
     /**
@@ -153,7 +169,7 @@ class TestHarness
     }
 
     /**
-     * @iternal
+     * @internal
      *
      * @param Actor $actor
      *
@@ -162,6 +178,22 @@ class TestHarness
     public function isActorActive(Actor $actor)
     {
         return $this->activeActor === $actor;
+    }
+
+    /**
+     * @return callable
+     */
+    public function getDriverFactory()
+    {
+        return $this->driverFactory;
+    }
+
+    /**
+     * @param callable $driverFactory
+     */
+    public function setDriverFactory(callable $driverFactory)
+    {
+        $this->driverFactory = $driverFactory;
     }
 
     // context:

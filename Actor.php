@@ -7,6 +7,8 @@ use Modera\Component\SeleniumTools\Exceptions\ActorExecutionException;
 use Selenium\Browser;
 
 /**
+ * Represents a user and a browser that he is using for testing.
+ *
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
@@ -125,7 +127,11 @@ class Actor
     }
 
     /**
+     * See BHR_* constants of this class.
+     *
      * @param string $behaviour
+     *
+     * @return string[]
      */
     public function enableBehaviour($behaviour)
     {
@@ -301,7 +307,24 @@ class Actor
 
     protected function createDriverInstance($host, $connectionTimeout, $requestTimeout)
     {
-        return RemoteWebDriver::create($host, $this->webDriverCapabilities, $connectionTimeout, $requestTimeout);
+        $createDriver = function() use($host, $connectionTimeout, $requestTimeout) {
+            return RemoteWebDriver::create($host, $this->webDriverCapabilities, $connectionTimeout, $requestTimeout);
+        };
+
+        if ($this->harness && $this->harness->getDriverFactory()) {
+            $driverFactory = $this->harness->getDriverFactory();
+
+            $options = array(
+                'host' => $host,
+                'connection_timeout' => $connectionTimeout,
+                'request_timeout' => $requestTimeout,
+                'capabilities' => $this->webDriverCapabilities,
+            );
+
+            return call_user_func_array($driverFactory, [$this, $options, $createDriver]);
+        }
+
+        return $createDriver();
     }
 
     /**

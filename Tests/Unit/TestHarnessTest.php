@@ -23,7 +23,11 @@ class TestHarnessTest extends \PHPUnit_Framework_TestCase
 
     public function testManagingActors()
     {
+        $this->assertFalse($this->th->hasActor('bob'));
+
         $this->assertSame($this->th, $this->th->addActor('bob', 'http://example.com', ['FOO_BEH']));
+
+        $this->assertTrue($this->th->hasActor('bob'));
 
         $actor = $this->th->getActor('bob');
         $this->assertEquals('bob', $actor->getName());

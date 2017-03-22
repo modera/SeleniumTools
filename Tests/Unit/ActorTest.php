@@ -8,36 +8,9 @@ use Facebook\WebDriver\WebDriverAlert;
 use Modera\Component\SeleniumTools\Actor;
 use Modera\Component\SeleniumTools\ActorBrowserController;
 use Modera\Component\SeleniumTools\TestHarness;
+use Modera\Component\SeleniumTools\Tests\Fixtures\ActorWithCallbacks;
 
 require_once __DIR__.'/../Fixtures/SleepFuncOverride.php';
-
-class FooActor extends Actor
-{
-    public $createDriverInstanceCallback;
-
-    public $getControllerCallback;
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function createDriverInstance($host, $connectionTimeout, $requestTimeout)
-    {
-        if ($this->createDriverInstanceCallback) {
-            return call_user_func_array($this->createDriverInstanceCallback, [$host, $connectionTimeout, $requestTimeout]);
-        } else {
-            return parent::createDriverInstance($host, $connectionTimeout, $requestTimeout);
-        }
-    }
-
-    protected function getController()
-    {
-        if ($this->getControllerCallback) {
-            return call_user_func_array($this->getControllerCallback, []);
-        } else {
-            return parent::getController();
-        }
-    }
-}
 
 /**
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
@@ -89,7 +62,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
         $driverWannaBe = new \stdClass();
         $passedArguments = [];
 
-        $actor = new FooActor('bob', 'http://example.com', $this->mockHarness);
+        $actor = new ActorWithCallbacks('bob', 'http://example.com', $this->mockHarness);
         $actor->createDriverInstanceCallback = function() use(&$passedArguments, $driverWannaBe) {
             $passedArguments = func_get_args();
 
@@ -117,7 +90,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
      */
     public function testCreateDriverWithException()
     {
-        $actor = new FooActor('bob', 'http://example.com', $this->mockHarness);
+        $actor = new ActorWithCallbacks('bob', 'http://example.com', $this->mockHarness);
         $actor->createDriverInstanceCallback = function() {
             throw new \Exception('Foobar');
         };
@@ -135,7 +108,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
 
         $passedArguments = [];
 
-        $actor = new FooActor('bob', 'http://example.com', $this->mockHarness);
+        $actor = new ActorWithCallbacks('bob', 'http://example.com', $this->mockHarness);
         $actor->createDriverInstanceCallback = function() use(&$passedArguments) {
             $passedArguments = func_get_args();
         };
@@ -159,7 +132,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
         $additionalArg1 = new \stdClass();
         $additionalArg2 = new \stdClass();
 
-        $actor = new FooActor(
+        $actor = new ActorWithCallbacks(
             'bob',
             'http://example.com',
             $this->mockHarness,
@@ -221,7 +194,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
         $driverWannaBe = new \stdClass();
         $controllerMock = \Phake::mock(ActorBrowserController::class);
 
-        $actor = new FooActor(
+        $actor = new ActorWithCallbacks(
             'bob',
             'http://example.com',
             $this->mockHarness
@@ -242,7 +215,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
         $driverWannaBe = new \stdClass();
         $controllerMock = \Phake::mock(ActorBrowserController::class);
 
-        $actor = new FooActor(
+        $actor = new ActorWithCallbacks(
             'bob',
             'http://example.com',
             $this->mockHarness
@@ -268,7 +241,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
         $driverMock = \Phake::mock(RemoteWebDriver::class);
         $controllerMock = \Phake::mock(ActorBrowserController::class);
 
-        $actor = new FooActor(
+        $actor = new ActorWithCallbacks(
             'bob',
             'http://example.com',
             $this->mockHarness
@@ -307,7 +280,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
         $controllerMock = \Phake::mock(ActorBrowserController::class);
         $driverMock = \Phake::mock(RemoteWebDriver::class);
 
-        $actor = new FooActor(
+        $actor = new ActorWithCallbacks(
             'bob',
             'http://example.com',
             $this->mockHarness
