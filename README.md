@@ -11,18 +11,18 @@ execution
 
 # Writing multi-user tests
 
-Sometimes having E2E (end-to-end) tests that whehn having just single user just doesn't cut it. For example, in order to 
+Sometimes having E2E (end-to-end) tests that operate only with one user just doesn't cut it. For example, in order to 
 test if a chat application really works you need to emulate collaboration between two users - a fronted user who might
-initiate a conversation and an administrator, who replies to frontend user's question. In this case we have two roles - 
+initiate a conversation and an administrator, who replies to frontend user's questions. In this case we have two roles - 
 an administrator and a customer, so our test scenario might look like this:
 
-* A customer initiates a conversation by sending "Hello, I have a question" message
-* A administrator is expected to receive a message - we can periodically check if a page source contains 
+* A customer initiates a conversation by sending, say, "Hello, I have a question" message
+* An administrator is expected to receive a message - we can periodically check if a page source contains 
 "Hello, I have a question" piece of text
-* Once an administrator has received the message, he writes an response - "Hello, how can I help you ?" and sends it
+* Once an administrator has received the message, he writes a response - "Hello, how can I help you ?" and sends it
 * Now we are checking that customer's page contains a piece of text "Hello, how can I help you ?"
 
-Although our test scenario if very simple and in this case contains only 4 steps it will make sure that our 
+Although our test scenario if very simple and in this case contains only 4 steps, it is enough to make sure that our 
 chat-application baseline functionality works as expected. In context of this library in order to simulate a user
 we use a high-level abstraction called an "Actor". Essentially, an actor represents an isolated browser that is being 
 managed by Selenium and adds several nice features into the mix:
@@ -64,25 +64,24 @@ test-case we are going to use appear.in:
         {
             $roomUrl = 'https://appear.in/seleniumtools-'.\uniqid();
     
-            $this->harness = new TestHarness('default');
-            $this->harness->setDriverFactory(function($actor, array $connectionOptions) { // 1
+            // 1
+            $driverFactory = new CallbackDriverFactory(function() {
                 $options = new ChromeOptions();
                 $options->addArguments([
                     'use-fake-ui-for-media-stream',
                 ]);
-    
+     
                 $capabilities = DesiredCapabilities::chrome();
                 $capabilities->setCapability(ChromeOptions::CAPABILITY, $options);
-    
+     
                 $driver = RemoteWebDriver::create(
-                    $connectionOptions['host'],
-                    $capabilities,
-                    $connectionOptions['connection_timeout'],
-                    $connectionOptions['request_timeout']
+                    'http://localhost:4444/wd/hub', $capabilities
                 );
-    
+     
                 return $driver;
             });
+     
+            $this->harness = new TestHarness('default', null, $driverFactory);
     
             $this->harness->addActor('customer', $roomUrl);
             $this->harness->addActor('admin', $roomUrl);
@@ -132,8 +131,8 @@ little more detailed way what each of the specified in comments moments does:
  that if you need to do some tweaking, you can always do it), to achieve this we are defining a custom driver-factory
  which tells Chrome (this test scenario assumes that you have Chrome installed locally) to emulate a microphone. Most
  of the time you won't need to do this advanced configuration, but still it is always nice to have that option
- when you need it.
-2. Here we are opening a "admin" browser, this is done simply to address a moment that appear.in doesn't show messages
+ when you need it. 
+2. Here we are opening a "admin" browser, this is done simply to address a fact that appear.in doesn't show messages
  that were sent before the browser was open, so by opening an "admin" browser we are making sure that when "customer"
  actually sends a message, we will receive it.
 3. In this step we finding a button to open a chat area and send a message through it.
@@ -142,7 +141,7 @@ that a HTML source of the page contains this piece of text.
 5. Activating back "admin" actor. Browser is open only once for every customer (unless you kill it explicitly), so
 in this case the browser that we have opened in step "1" will just receive a focus.
 6. Here we are taking a message that has been sent by "customer" actor and verify that the browser page's source
-code indeed contains given piece of text.
+code indeed contains a given piece of text.
 
 In order to run this test-case you need to follow the following steps:
 
@@ -201,21 +200,12 @@ In order to create a browser, Actor will try to resolve these environment variab
  * SELENIUM_HOST
  * SELENIUM_CONNECTION_TIMEOUT
  * SELENIUM_REQUEST_TIMEOUT
+ * SELENIUM_BROWSER - for a list of available browser presets see Selenium integrations library's DesiredCapabilities 
+ class (methods like 'chrome', 'firefox')
  
 So in order to change, say, a host when running a test suite using Docker you would need to use `-e` flag, for example:
     
-    docker run --network=host -it --rm -v $(pwd):/mnt/tmp -w /mnt/tmp -e SELENIUM_HOST=http://foo modera/php5-fpm bash -c "./vendor/bin/phpunit"
-
-### Actors capabilities
-
-Capabilities describe how an actor related browser would behave. In order to configure browser capabilities you need
-to use a second argument when creating a TestHarness. For example, in order tell actors that they need to use
-a chrome browser you can come up with something like this:
-
-    $harness = new TestHarness(
-        $harnessName,
-        array(WebDriverCapabilityType::BROWSER_NAME => 'chrome')
-    );
+    docker run --network=host -it --rm -v $(pwd):/mnt/tmp -w /mnt/tmp -e SELENIUM_HOST=http://my-host modera/php5-fpm bash -c "./vendor/bin/phpunit"
 
 ### Actors behaviours
 

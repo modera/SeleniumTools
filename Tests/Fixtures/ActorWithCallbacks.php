@@ -10,21 +10,7 @@ use Modera\Component\SeleniumTools\Actor;
  */
 class ActorWithCallbacks extends Actor
 {
-    public $createDriverInstanceCallback;
-
     public $getControllerCallback;
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function createDriverInstance($host, $connectionTimeout, $requestTimeout)
-    {
-        if ($this->createDriverInstanceCallback) {
-            return call_user_func_array($this->createDriverInstanceCallback, [$host, $connectionTimeout, $requestTimeout]);
-        } else {
-            return parent::createDriverInstance($host, $connectionTimeout, $requestTimeout);
-        }
-    }
 
     protected function getController()
     {

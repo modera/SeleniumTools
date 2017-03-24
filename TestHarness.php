@@ -30,13 +30,6 @@ class TestHarness
     private $context = array();
 
     /**
-     * These are shared by all associated actors if it is not overridden per-actor.
-     *
-     * @var array
-     */
-    private $defaultWebDriverCapabilities;
-
-    /**
      * @var callable
      */
     private $additionalActorArgumentsFactory;
@@ -55,34 +48,37 @@ class TestHarness
 
     /**
      * @param string $name
-     * @param array $defaultWebDriverCapabilities
      * @param callable $additionalActorArgumentsFactory
+     * @param DriverFactoryInterface $driverFactory
      */
     public function __construct(
-        $name, array $defaultWebDriverCapabilities = [], callable $additionalActorArgumentsFactory = null
+        $name,
+        callable $additionalActorArgumentsFactory = null,
+        DriverFactoryInterface $driverFactory = null
     )
     {
         $this->name = $name;
-        $this->defaultWebDriverCapabilities = $defaultWebDriverCapabilities;
         $this->additionalActorArgumentsFactory = $additionalActorArgumentsFactory;
+        $this->driverFactory = $driverFactory;
+    }
+
+    /**
+     * @return callable
+     */
+    public function getAdditionalActorArgumentsFactory()
+    {
+        return $this->additionalActorArgumentsFactory;
     }
 
     /**
      * @param string $actorName
      * @param string $startUrl
-     * @param array $webDriverCapabilities  See Actor::BHR_* constants
      *
      * @return TestHarness
      */
-    public function addActor($actorName, $startUrl, array $webDriverCapabilities = array())
+    public function addActor($actorName, $startUrl)
     {
-        if (count($webDriverCapabilities) == 0) {
-            $webDriverCapabilities = $this->defaultWebDriverCapabilities;
-        }
-
-        $this->actors[$actorName] = new Actor(
-            $actorName, $startUrl, $this, $webDriverCapabilities, $this->additionalActorArgumentsFactory
-        );
+        $this->actors[$actorName] = new Actor($actorName, $startUrl, $this);
 
         return $this;
     }
@@ -181,19 +177,27 @@ class TestHarness
     }
 
     /**
-     * @return callable
+     * @return DriverFactoryInterface
      */
     public function getDriverFactory()
     {
+        if (!$this->driverFactory) {
+            $this->driverFactory = new EnvironmentAwareDriverFactory();
+        }
+
         return $this->driverFactory;
     }
 
     /**
-     * @param callable $driverFactory
+     * @internal
+     *
+     * @param Actor $actor
+     *
+     * @return \Facebook\WebDriver\Remote\RemoteWebDriver
      */
-    public function setDriverFactory(callable $driverFactory)
+    public function createDriver(Actor $actor)
     {
-        $this->driverFactory = $driverFactory;
+        return $this->getDriverFactory()->createDriver($actor);
     }
 
     // context:

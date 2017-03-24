@@ -60,14 +60,13 @@ class ActorTest extends \PHPUnit_Framework_TestCase
     public function testDealingWithDriver()
     {
         $driverWannaBe = new \stdClass();
-        $passedArguments = [];
 
         $actor = new ActorWithCallbacks('bob', 'http://example.com', $this->mockHarness);
-        $actor->createDriverInstanceCallback = function() use(&$passedArguments, $driverWannaBe) {
-            $passedArguments = func_get_args();
 
-            return $driverWannaBe;
-        };
+        \Phake::when($this->mockHarness)
+            ->createDriver($actor)
+            ->thenReturn($driverWannaBe)
+        ;
 
         $this->assertFalse($actor->isDriverCreated());
 
@@ -77,73 +76,37 @@ class ActorTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($driverWannaBe, $driver);
         $this->assertSame($driver, $anotherDriver, 'Driver must have been runtime cached.');
 
-        $this->assertEquals('http://localhost:4444/wd/hub', $passedArguments[0]);
-        $this->assertEquals(30 * 1000, $passedArguments[1]);
-        $this->assertEquals(15 * 10000, $passedArguments[2]);
-
         $this->assertTrue($actor->isDriverCreated());
-    }
-
-    /**
-     * @expectedExceptionMessage Actor "bob" was unable to establish connection with Selenium: "Foobar".
-     * @expectedException \Modera\Component\SeleniumTools\Exceptions\ActorExecutionException
-     */
-    public function testCreateDriverWithException()
-    {
-        $actor = new ActorWithCallbacks('bob', 'http://example.com', $this->mockHarness);
-        $actor->createDriverInstanceCallback = function() {
-            throw new \Exception('Foobar');
-        };
-
-        $actor->getDriver();
-
-        $this->fail('Exception must have been thrown');
-    }
-
-    public function testCreateDriverUsingEnvVariables()
-    {
-        $_SERVER['SELENIUM_HOST'] = 'foo-host';
-        $_SERVER['SELENIUM_CONNECTION_TIMEOUT'] = 'foo-timeout';
-        $_SERVER['SELENIUM_REQUEST_TIMEOUT'] = 'foo-request-timeout';
-
-        $passedArguments = [];
-
-        $actor = new ActorWithCallbacks('bob', 'http://example.com', $this->mockHarness);
-        $actor->createDriverInstanceCallback = function() use(&$passedArguments) {
-            $passedArguments = func_get_args();
-        };
-
-        $actor->getDriver();
-
-        $this->assertEquals($_SERVER['SELENIUM_HOST'], $passedArguments[0]);
-        $this->assertEquals($_SERVER['SELENIUM_CONNECTION_TIMEOUT'], $passedArguments[1]);
-        $this->assertEquals($_SERVER['SELENIUM_REQUEST_TIMEOUT'], $passedArguments[2]);
-
-        unset($_SERVER['SELENIUM_HOST']);
-        unset($_SERVER['SELENIUM_CONNECTION_TIMEOUT']);
-        unset($_SERVER['SELENIUM_REQUEST_TIMEOUT']);
     }
 
     public function testRunningInActor()
     {
-        $driverWannaBe = new \stdClass();
+        $driverMock = \Phake::mock(RemoteWebDriver::class);
         $controllerMock = \Phake::mock(ActorBrowserController::class);
 
         $additionalArg1 = new \stdClass();
         $additionalArg2 = new \stdClass();
 
-        $actor = new ActorWithCallbacks(
-            'bob',
-            'http://example.com',
-            $this->mockHarness,
-            [],
-            function() use($additionalArg1, $additionalArg2) {
-                return [$additionalArg1, $additionalArg2];
-            }
-        );
+        $actor = new ActorWithCallbacks('bob', 'http://example.com', $this->mockHarness);
 
-        $this->mockDriverAndControllerMethods($actor, $controllerMock, $driverWannaBe);
         $this->trainControllerToLaunchBrowserAndCreateDriver($controllerMock, $actor);
+        $this->mockDriverAndControllerMethods($actor, $controllerMock);
+
+        \Phake::when($this->mockHarness)
+            ->createDriver($actor)
+            ->thenReturn($driverMock)
+        ;
+
+        \Phake::when($this->mockHarness)
+            ->getAdditionalActorArgumentsFactory()
+            ->thenReturn(function() use($additionalArg1, $additionalArg2) {
+                return [$additionalArg1, $additionalArg2];
+            })
+        ;
+
+        $actor->getControllerCallback = function() use($controllerMock) {
+            return $controllerMock;
+        };
 
         $isCalled = false;
         $invocationArgs = array();
@@ -163,7 +126,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($isCalled);
         $this->assertEquals(1, count($invocationArgs));
-        $this->assertSame($driverWannaBe, $invocationArgs[0]['driver']);
+        $this->assertSame($driverMock, $invocationArgs[0]['driver']);
         $this->assertSame($actor, $invocationArgs[0]['actor']);
         $this->assertSame($additionalArg1, $invocationArgs[0]['arg1']);
         $this->assertSame($additionalArg2, $invocationArgs[0]['arg2']);
@@ -191,7 +154,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
      */
     public function testRunningInActorWithException()
     {
-        $driverWannaBe = new \stdClass();
+        $driverMock = \Phake::mock(RemoteWebDriver::class);
         $controllerMock = \Phake::mock(ActorBrowserController::class);
 
         $actor = new ActorWithCallbacks(
@@ -200,7 +163,15 @@ class ActorTest extends \PHPUnit_Framework_TestCase
             $this->mockHarness
         );
 
-        $this->mockDriverAndControllerMethods($actor, $controllerMock, $driverWannaBe);
+        $actor->getControllerCallback = function() use($controllerMock) {
+            return $controllerMock;
+        };
+
+        \Phake::when($this->mockHarness)
+            ->createDriver($actor)
+            ->thenReturn($driverMock)
+        ;
+
         $this->trainControllerToLaunchBrowserAndCreateDriver($controllerMock, $actor);
 
         $runCallback = function() {
@@ -212,7 +183,7 @@ class ActorTest extends \PHPUnit_Framework_TestCase
 
     public function testRunningWithMaximizedWindow()
     {
-        $driverWannaBe = new \stdClass();
+        $driverMock = \Phake::mock(RemoteWebDriver::class);
         $controllerMock = \Phake::mock(ActorBrowserController::class);
 
         $actor = new ActorWithCallbacks(
@@ -221,7 +192,15 @@ class ActorTest extends \PHPUnit_Framework_TestCase
             $this->mockHarness
         );
 
-        $this->mockDriverAndControllerMethods($actor, $controllerMock, $driverWannaBe);
+        $actor->getControllerCallback = function () use ($controllerMock) {
+            return $controllerMock;
+        };
+
+        \Phake::when($this->mockHarness)
+            ->createDriver($actor)
+            ->thenReturn($driverMock)
+        ;
+
         $this->trainControllerToLaunchBrowserAndCreateDriver($controllerMock, $actor);
 
         \Phake::when($controllerMock)
@@ -247,12 +226,20 @@ class ActorTest extends \PHPUnit_Framework_TestCase
             $this->mockHarness
         );
 
-        $this->mockDriverAndControllerMethods($actor, $controllerMock, $driverMock);
         $this->trainControllerToLaunchBrowserAndCreateDriver($controllerMock, $actor);
+
+        $actor->getControllerCallback = function () use ($controllerMock) {
+            return $controllerMock;
+        };
 
         \Phake::when($controllerMock)
             ->isFocusingNeeded()
             ->thenReturn(true)
+        ;
+
+        \Phake::when($this->mockHarness)
+            ->createDriver($actor)
+            ->thenReturn($driverMock)
         ;
 
         $alertMock = \Phake::mock(WebDriverAlert::class);
@@ -286,8 +273,13 @@ class ActorTest extends \PHPUnit_Framework_TestCase
             $this->mockHarness
         );
 
+        \Phake::when($this->mockHarness)
+            ->createDriver($actor)
+            ->thenReturn($driverMock)
+        ;
+
         $this->trainControllerToLaunchBrowserAndCreateDriver($controllerMock, $actor);
-        $this->mockDriverAndControllerMethods($actor, $controllerMock, $driverMock);
+        $this->mockDriverAndControllerMethods($actor, $controllerMock);
 
         $reflActor = new \ReflectionClass(Actor::class);
         $reflDriverProp = $reflActor->getProperty('driver');
@@ -321,11 +313,8 @@ class ActorTest extends \PHPUnit_Framework_TestCase
         ;
     }
 
-    private function mockDriverAndControllerMethods($actor, $controllerMock, $driverWannaBe)
+    private function mockDriverAndControllerMethods($actor, $controllerMock)
     {
-        $actor->createDriverInstanceCallback = function () use ($driverWannaBe) {
-            return $driverWannaBe;
-        };
         $actor->getControllerCallback = function () use ($controllerMock) {
             return $controllerMock;
         };

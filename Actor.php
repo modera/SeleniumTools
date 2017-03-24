@@ -42,11 +42,6 @@ class Actor
     private $startUrl;
 
     /**
-     * @var array
-     */
-    private $webDriverCapabilities;
-
-    /**
      * @var TestHarness
      */
     private $harness;
@@ -55,11 +50,6 @@ class Actor
      * @var RemoteWebDriver
      */
     private $driver;
-
-    /**
-     * @var callable
-     */
-    private $additionalArgumentsFactory;
 
     /**
      * Additional cached arguments for callback given in "run" method.
@@ -83,27 +73,18 @@ class Actor
     private $controller;
 
     /**
-     * @param string $name  A name that represents this user, like "admin". This name later can be used by listeners
+     * @param string $name A name that represents this user, like "admin". This name later can be used by listeners
      *                      to properly format execution logs and things like that
-     * @param string $startUrl  A URL of default page that will be opened in a browser
-     * @param array $webDriverCapabilities
-     * @param TestHarness $harness  A test harness this actor belongs to
-     * @param callable|null $additionalArgumentsFactory  Optional callback that can be used to provide additional parameters
-     *                                                   for a "callback" argument when "run" method is executed
+     * @param string $startUrl A URL of default page that will be opened in a browser
+     * @param TestHarness $harness A test harness this actor belongs to
      */
     public function __construct(
-        $name,
-        $startUrl,
-        TestHarness $harness,
-        array $webDriverCapabilities = [],
-        callable $additionalArgumentsFactory = null
+        $name, $startUrl, TestHarness $harness
     )
     {
         $this->name = $name;
         $this->startUrl = $startUrl;
-        $this->webDriverCapabilities = $webDriverCapabilities;
         $this->harness = $harness;
-        $this->additionalArgumentsFactory = $additionalArgumentsFactory;
     }
 
     /**
@@ -204,7 +185,7 @@ class Actor
     public function getDriver()
     {
         if (!$this->driver) {
-            $this->driver = $this->createDriver();
+            $this->driver = $this->harness->createDriver($this);
         }
 
         return $this->driver;
@@ -251,9 +232,10 @@ class Actor
             $this->focus(1);
         }
 
-        if ($this->additionalArgumentsFactory && count($this->additionalArguments) == 0) {
+        $argumentsFactory = $this->harness->getAdditionalActorArgumentsFactory();
+        if ($argumentsFactory && count($this->additionalArguments) == 0) {
             $this->additionalArguments = call_user_func_array(
-                $this->additionalArgumentsFactory,
+                $argumentsFactory,
                 [$this->getDriver(), $this, $this->harness]
             );
         }
@@ -283,66 +265,6 @@ class Actor
         }
 
         return $this->controller;
-    }
-
-    protected function createDriver()
-    {
-        $config = array(
-            'host' => $this->resolveConfigValue('SELENIUM_HOST', 'http://localhost:4444/wd/hub'),
-            'connection_timeout' => $this->resolveConfigValue('SELENIUM_CONNECTION_TIMEOUT', 30 * 1000),
-            'request_timeout' => $this->resolveConfigValue('SELENIUM_REQUEST_TIMEOUT', 15 * 10000)
-        );
-
-        try {
-            return $this->createDriverInstance($config['host'], $config['connection_timeout'], $config['request_timeout']);
-        } catch (\Exception $e) {
-            $msg = sprintf(
-                'Actor "%s" was unable to establish connection with Selenium: "%s".',
-                $this->name, $e->getMessage()
-            );
-
-            throw new ActorExecutionException($msg, null, $e);
-        }
-    }
-
-    protected function createDriverInstance($host, $connectionTimeout, $requestTimeout)
-    {
-        $createDriver = function() use($host, $connectionTimeout, $requestTimeout) {
-            return RemoteWebDriver::create($host, $this->webDriverCapabilities, $connectionTimeout, $requestTimeout);
-        };
-
-        if ($this->harness && $this->harness->getDriverFactory()) {
-            $driverFactory = $this->harness->getDriverFactory();
-
-            $options = array(
-                'host' => $host,
-                'connection_timeout' => $connectionTimeout,
-                'request_timeout' => $requestTimeout,
-                'capabilities' => $this->webDriverCapabilities,
-            );
-
-            return call_user_func_array($driverFactory, [$this, $options, $createDriver]);
-        }
-
-        return $createDriver();
-    }
-
-    /**
-     * @param string $key
-     * @param string $fallbackValue
-     *
-     * @return string
-     */
-    private function resolveConfigValue($key, $fallbackValue)
-    {
-        // $_SERVER values have priority because they might be easily overridden through things like phpunit.xml.dist.
-        if (isset($_SERVER[$key])) {
-            return $_SERVER[$key];
-        }
-
-        $envValue = getenv($key);
-
-        return false !== $envValue ? $envValue : $fallbackValue;
     }
 
     /**
