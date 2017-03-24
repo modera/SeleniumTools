@@ -219,7 +219,74 @@ For a full list of available behaviours see Actor::BHR_* constants.
 
 # Headless environment
 
+In order to make it possible to record video of selenium tests being run we use are relying on these components:
+
+* Selenium - launches browsers and controls them
+* XVFB - is used to start Selenium node, creates a virtual frame buffer for browser windows that Selenium opens
+* FFMPEG - connects to a remote XVFB and grabs the virtual screen created by it
+* FFMPEG REST server - runs on a host where FFMPEG is installed, the server starts/stops video recording and creates 
+properly named video files
+* PHPUnit/Behat listener - listeners send requests to the FFMPEG REST server to inform it when the server needs to start
+ recording video and then eventually stop and dump it to a file
+
+        All these components must run in one private sub-network or be publicly accessible from web, for this setup
+        to work correctly all components must be able to connecto to each other. 
+
+Before we get into details it is worth mentioning that though in a setup described below most of these components run
+on different hosts (it gives more flexibility to run tests in parallel in the future) in some situations it might be
+fine to run several components on the same host as well - like running FFMPEG REST Server/FFMPEG on the same host where 
+you are running tests from.
+
+The easiest way to try to run tests in a headless environment is to use a seed configuration which is shipped with this 
+library and is located in `Resources/dockerized-video-recorder` directory. In this manual we assume
+that your application is using Whaler to configure docker containers, so the next step you need to do is to append contents
+of `Resources/dockerized-video-recorder/whaler.yml` to your root whaler.yml, copy `Resources/dockerized-video-recorder/.docker`
+and `Resources/dockerized-video-recorder/ffmpeg-server-web` directories next to your root whaler.yml file. Once these 
+files are copied you need to update the whaler application's config by running `whaler config --update` and then rebuild 
+it using `whaler rebuild`.
+
+One last step might be needed to before we can move on to section describing how to write tests - check 
+`ffmpeg-server-web/index.php` that its `require` statement has a proper path for `autoload.php` file.
+
 ## Testing with plain PHPUnit
+
+If you want to run tests using PHPUnit you will need to slightly tweak your phpunit.xml.dist, we will need to add 
+a listener, so the file would look similar to this:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+        <phpunit backupGlobals="false"
+                 backupStaticAttributes="false"
+                 colors="true"
+                 convertErrorsToExceptions="true"
+                 convertNoticesToExceptions="true"
+                 convertWarningsToExceptions="true"
+                 processIsolation="false"
+                 stopOnFailure="false"
+                 syntaxCheck="false"
+                 bootstrap="vendor/autoload.php"
+        >
+        
+            <listeners>
+                <listener class="Modera\Component\SeleniumTools\VideoRecording\RemotePHPUnitListener\RemoteReportingListener" />
+            </listeners>
+        
+            <testsuites>
+                <testsuite name="Sample testcase">
+                    <directory>./tests/</directory>
+                </testsuite>
+            </testsuites>
+        </phpunit>
+        
+Since previously we were running our AppearInTest test using a Selenium node running on a host machine, but now
+running inside an orchestrated dockerized environment we need to update a snippet of code responsible for establishing
+a connection to server:
+
+    $driver = RemoteWebDriver::create(
+        'http://selenium-hub:4444/wd/hub', $capabilities, 15 * 1000, 30 * 1000
+    );
+    
+Once this is done you can run `whaler run php. "./vendor/bin/phpunit"` to run tests. Once test is run you check 
+`ffmpeg-server-web` directory for video recordings.
 
 ## Testing with Behat
 
