@@ -45,8 +45,7 @@ class TestHarnessFactory
         $harnessConfig = $harnessesConfig[$harnessName];
 
         $harness = new TestHarness(
-            $harnessName,
-            array(WebDriverCapabilityType::BROWSER_NAME => $harnessConfig['browser'])
+            $harnessName, null, new BehatDriverFactory($this->config, $harnessName)
         );
 
         foreach ($harnessConfig['actors'] as $name => $actorConfig) {

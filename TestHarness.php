@@ -3,9 +3,10 @@
 namespace Modera\Component\SeleniumTools;
 
 use Modera\Component\SeleniumTools\Exceptions\NoSuchActorException;
-use Selenium\Client;
 
 /**
+ * A component that is responsible for orchestrating multi-actors testing sessions.
+ *
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
@@ -29,54 +30,55 @@ class TestHarness
     private $context = array();
 
     /**
-     * These are shared by all associated actors if it is not overridden per-actor.
-     *
-     * @var array
-     */
-    private $defaultWebDriverCapabilities;
-
-    /**
      * @var callable
      */
     private $additionalActorArgumentsFactory;
 
     /**
-     * An actor that is pefrorming actions as of now.
+     * An actor that is performing actions as of now.
      *
      * @var Actor
      */
     private $activeActor;
 
     /**
+     * @var callable
+     */
+    private $driverFactory;
+
+    /**
      * @param string $name
-     * @param array $defaultWebDriverCapabilities
      * @param callable $additionalActorArgumentsFactory
+     * @param DriverFactoryInterface $driverFactory
      */
     public function __construct(
-        $name, array $defaultWebDriverCapabilities = [], callable $additionalActorArgumentsFactory = null
+        $name,
+        callable $additionalActorArgumentsFactory = null,
+        DriverFactoryInterface $driverFactory = null
     )
     {
         $this->name = $name;
-        $this->defaultWebDriverCapabilities = $defaultWebDriverCapabilities;
         $this->additionalActorArgumentsFactory = $additionalActorArgumentsFactory;
+        $this->driverFactory = $driverFactory;
+    }
+
+    /**
+     * @return callable
+     */
+    public function getAdditionalActorArgumentsFactory()
+    {
+        return $this->additionalActorArgumentsFactory;
     }
 
     /**
      * @param string $actorName
      * @param string $startUrl
-     * @param array $webDriverCapabilities  See Actor::BHR_* constants
      *
      * @return TestHarness
      */
-    public function addActor($actorName, $startUrl, array $webDriverCapabilities = array())
+    public function addActor($actorName, $startUrl)
     {
-        if (count($webDriverCapabilities) == 0) {
-            $webDriverCapabilities = $this->defaultWebDriverCapabilities;
-        }
-
-        $this->actors[$actorName] = new Actor(
-            $actorName, $startUrl, $this, $webDriverCapabilities, $this->additionalActorArgumentsFactory
-        );
+        $this->actors[$actorName] = new Actor($actorName, $startUrl, $this);
 
         return $this;
     }
@@ -92,6 +94,16 @@ class TestHarness
         $this->actors[$actorName] = $actor;
 
         return $this;
+    }
+
+    /**
+     * @param string $actorName
+     *
+     * @return bool
+     */
+    public function hasActor($actorName)
+    {
+        return isset($this->actors[$actorName]);
     }
 
     /**
@@ -153,7 +165,7 @@ class TestHarness
     }
 
     /**
-     * @iternal
+     * @internal
      *
      * @param Actor $actor
      *
@@ -162,6 +174,30 @@ class TestHarness
     public function isActorActive(Actor $actor)
     {
         return $this->activeActor === $actor;
+    }
+
+    /**
+     * @return DriverFactoryInterface
+     */
+    public function getDriverFactory()
+    {
+        if (!$this->driverFactory) {
+            $this->driverFactory = new EnvironmentAwareDriverFactory();
+        }
+
+        return $this->driverFactory;
+    }
+
+    /**
+     * @internal
+     *
+     * @param Actor $actor
+     *
+     * @return \Facebook\WebDriver\Remote\RemoteWebDriver
+     */
+    public function createDriver(Actor $actor)
+    {
+        return $this->getDriverFactory()->createDriver($actor);
     }
 
     // context:

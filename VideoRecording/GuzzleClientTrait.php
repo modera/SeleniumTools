@@ -10,7 +10,7 @@ use GuzzleHttp\Client;
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-trait ReporterTrait
+trait GuzzleClientTrait
 {
     /**
      * @var Client
@@ -20,7 +20,7 @@ trait ReporterTrait
     /**
      * @return Client
      */
-    private function getGuzzleClient()
+    protected function getGuzzleClient()
     {
         if (!$this->guzzleClient) {
             $this->guzzleClient = new Client();

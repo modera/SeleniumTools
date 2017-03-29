@@ -23,16 +23,15 @@ class TestHarnessTest extends \PHPUnit_Framework_TestCase
 
     public function testManagingActors()
     {
-        $this->assertSame($this->th, $this->th->addActor('bob', 'http://example.com', ['FOO_BEH']));
+        $this->assertFalse($this->th->hasActor('bob'));
+
+        $this->assertSame($this->th, $this->th->addActor('bob', 'http://example.com'));
+
+        $this->assertTrue($this->th->hasActor('bob'));
 
         $actor = $this->th->getActor('bob');
         $this->assertEquals('bob', $actor->getName());
         $this->assertEquals('http://example.com', $actor->getStartUrl());
-
-        $reflActor = new \ReflectionClass($actor);
-        $reflWebDriverCapabilities = $reflActor->getProperty('webDriverCapabilities');
-        $reflWebDriverCapabilities->setAccessible(true);
-        $this->assertEquals(['FOO_BEH'], $reflWebDriverCapabilities->getValue($actor));
     }
 
     public function testRunningInActor()

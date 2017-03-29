@@ -141,6 +141,8 @@ class Server
      */
     private function execCommand($command)
     {
+        file_put_contents(__DIR__.'/commands', $command, FILE_APPEND);
+
         if ($this->commandExecutor) {
             call_user_func($this->commandExecutor, $command, $this);
         } else {
@@ -150,8 +152,13 @@ class Server
 
     private function normalizeTestCaseName($encodedTestCaseName)
     {
+        $result = str_replace(
+            ['\\', ' '], '_', preg_replace('~(?<=\\w)([A-Z])~', '-$1', $this->decodeName($encodedTestCaseName))
+        );
+
         // Modera\ChatTest -> modera.chat-test
-        return strtolower(str_replace('\\', '_', preg_replace('~(?<=\\w)([A-Z])~', '-$1', $this->decodeName($encodedTestCaseName))));
+        // This is scenario name-this is feature name -> this_is_scenario_name-this_is_feature_name
+        return strtolower($result);
     }
 
     private function decodeName($encodedTestCaseName)
