@@ -1,4 +1,4 @@
-# SeleniumTools
+# SeleniumTools [![Build Status](https://travis-ci.org/modera/SeleniumTools.svg?branch=master)](https://travis-ci.org/modera/SeleniumTools)
 
 This package contains a set of components that you may want to use when:
 
