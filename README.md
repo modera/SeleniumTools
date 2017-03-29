@@ -346,8 +346,13 @@ When the above configuration file is used (and you have Modera Foundation instal
 
 ### Writing your own multi-user aware Behat context files
 
-TODO explain how one would write multi-user Behat files like MJRContext and ExtJsGridContext.
+The easiest way to create a Behat context file that supports multi-user E2E is to extend 
+`\Modera\Component\SeleniumTools\Behat\Context\HarnessAwareContext`. To learn how to write your own FeatureContext files
+take a look at these two links:
+* [Behat official guide on writing custom FeatureContext files](http://behat.org/en/latest/user_guide/context.html)
+* For multi-user aware sample of FeatureContext files see `Modera\Component\SeleniumTools\Behat\Context\MJRContext`
+and `Modera\Component\SeleniumTools\Behat\Context\ExtJsGridContext`.
 
 # Testing ExtJs/MJR application (experimental)
 
-TODO Expalin how to use MJRContext, ExtJsGridContext
+For sample tests please see [Modera Foundation](https://github.com/modera/foundation-standard/tree/master/features).
