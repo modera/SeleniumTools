@@ -64,6 +64,26 @@ class ServerTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('-t modera_chat-test', $executedCommands[0]); // tmux session name
     }
 
+    public function testHandleRequest_WithTestCaseAsSentence()
+    {
+        $executedCommands = [];
+
+        $exec = function($cmd) use(&$executedCommands) {
+            $executedCommands[] = $cmd;
+        };
+
+        $s = new Server($exec);
+
+        // behat
+        $s->handleRequest(array(
+            'REQUEST_URI' => sprintf('/tests/%s', urlencode('This is scenario name-this is feature name')),
+            'REQUEST_METHOD' => 'POST'
+        ));
+
+        $this->assertEquals(1, count($executedCommands));
+        $this->assertContains('this_is_scenario_name-this_is_feature_name.mp4', $executedCommands[0]);
+    }
+
     private function assertValidResponseBodyWithFilename($rawResponse, $expectedFilename)
     {
         $this->assertTrue(is_array($rawResponse));

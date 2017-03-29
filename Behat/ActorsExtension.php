@@ -3,6 +3,7 @@
 namespace Modera\Component\SeleniumTools\Behat;
 
 use Behat\Behat\Context\ServiceContainer\ContextExtension;
+use Behat\Behat\EventDispatcher\ServiceContainer\EventDispatcherExtension;
 use Behat\Testwork\ServiceContainer\Extension as ExtensionInterface;
 use Behat\Testwork\ServiceContainer\ExtensionManager;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -63,6 +64,11 @@ class ActorsExtension implements ExtensionInterface
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('video_recorder')
+                    ->children()
+                        ->scalarNode('host')->end()
+                    ->end()
+                ->end()
                 ->arrayNode('harnesses')
                     ->prototype('array')
                         ->children()
@@ -95,6 +101,16 @@ class ActorsExtension implements ExtensionInterface
         );
         $contextInitializer->addTag(ContextExtension::INITIALIZER_TAG, array('priority' => 0));
         $container->setDefinition('actors.context_initializer', $contextInitializer);
+
+        if (isset($config['video_recorder']['host'])) {
+            $recorderConfig = $config['video_recorder'];
+
+            if ($recorderConfig['host']) {
+                $videoRecordingListener = new Definition(RemoteReportingListener::class, [$recorderConfig]);
+                $videoRecordingListener->addTag(EventDispatcherExtension::SUBSCRIBER_TAG);
+                $container->setDefinition('actors.video_recording_listener', $videoRecordingListener);
+            }
+        }
 
         // Importing environmental variables, those later can be referred from behat.yml file. For example,
         // if there's $_SERVER['BEHAT_FOO'] defined, then in behat.yml you can refer to it as "%BEHAT_FOO%".

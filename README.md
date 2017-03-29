@@ -239,43 +239,50 @@ you are running tests from.
 
 The easiest way to try to run tests in a headless environment is to use a seed configuration which is shipped with this 
 library and is located in `Resources/dockerized-video-recorder` directory. In this manual we assume
-that your application is using Whaler to configure docker containers, so the next step you need to do is to append contents
-of `Resources/dockerized-video-recorder/whaler.yml` to your root whaler.yml, copy `Resources/dockerized-video-recorder/.docker`
-and `Resources/dockerized-video-recorder/ffmpeg-server-web` directories next to your root whaler.yml file. Once these 
-files are copied you need to update the whaler application's config by running `whaler config --update` and then rebuild 
-it using `whaler rebuild`.
-
+that your application is using Whaler to configure docker containers, copy `Resources/dockerized-video-recorder/.docker`
+and `Resources/dockerized-video-recorder/ffmpeg-server-web` directories next to your root whaler.yml file and then run 
+these two commands:
+ 
+ * whaler create --config vendor/modera/selenium-tools/Resources/dockerized-video-recorder/whaler.yml
+ * whaler start
+ 
 One last step might be needed to before we can move on to section describing how to write tests - check 
 `ffmpeg-server-web/index.php` that its `require` statement has a proper path for `autoload.php` file.
 
 ## Testing with plain PHPUnit
 
 If you want to run tests using PHPUnit you will need to slightly tweak your phpunit.xml.dist, we will need to add 
-a listener, so the file would look similar to this:
+a listener and configure `RRL_ENDPOINT` environment variable, so the file would look similar to this:
 
     <?xml version="1.0" encoding="UTF-8"?>
-        <phpunit backupGlobals="false"
-                 backupStaticAttributes="false"
-                 colors="true"
-                 convertErrorsToExceptions="true"
-                 convertNoticesToExceptions="true"
-                 convertWarningsToExceptions="true"
-                 processIsolation="false"
-                 stopOnFailure="false"
-                 syntaxCheck="false"
-                 bootstrap="vendor/autoload.php"
-        >
-        
-            <listeners>
-                <listener class="Modera\Component\SeleniumTools\VideoRecording\RemotePHPUnitListener\RemoteReportingListener" />
-            </listeners>
-        
-            <testsuites>
-                <testsuite name="Sample testcase">
-                    <directory>./tests/</directory>
-                </testsuite>
-            </testsuites>
-        </phpunit>
+    <phpunit backupGlobals="false"
+             backupStaticAttributes="false"
+             colors="true"
+             convertErrorsToExceptions="true"
+             convertNoticesToExceptions="true"
+             convertWarningsToExceptions="true"
+             processIsolation="false"
+             stopOnFailure="false"
+             syntaxCheck="false"
+             bootstrap="vendor/autoload.php"
+    >
+    
+        <php>
+            <server name="RRL_ENDPOINT" value="vr-nginx" />
+        </php>
+    
+        <listeners>
+            <listener class="Modera\Component\SeleniumTools\VideoRecording\RemotePHPUnitListener\RemoteReportingListener" />
+        </listeners>
+    
+        <testsuites>
+            <testsuite name="Sample testcase">
+                <directory>./tests/</directory>
+            </testsuite>
+        </testsuites>
+    </phpunit>
+
+`RRL_ENDPOINT` is used by RemoteReportingListener to determine where "FFMPEG REST server" is located.
         
 Since previously we were running our AppearInTest test using a Selenium node running on a host machine, but now
 running inside an orchestrated dockerized environment we need to update a snippet of code responsible for establishing
@@ -290,4 +297,57 @@ Once this is done you can run `whaler run php. "./vendor/bin/phpunit"` to run te
 
 ## Testing with Behat
 
+If you want to run your tests using Behat then you need to install a Behat package to you project 
+(`composer require behat/behat:^3.0`) and create a file called `behat.yml` in a root of your project directory. This is 
+how a [sample configuration for Modera Foundation](https://github.com/modera/foundation-standard/blob/master/behat.yml) file might 
+look like:
+
+    default:
+        extensions:
+            Modera\Component\SeleniumTools\Behat\ActorsExtension:
+                drivers:
+                    default:
+                        browser: chrome
+                        host: "%BEHAT_SELENIUM_HOST%"
+                video_recorder:
+                    host: "%BEHAT_VR_HOST%"
+                harnesses:
+                    default:
+                        driver: default
+                        actors:
+                            admin:
+                                base_url: "%BEHAT_BACKEND_BASE_URL%"
+                            john.doe:
+                                base_url: "%BEHAT_BACKEND_BASE_URL%"
+        suites:
+            default:
+                contexts:
+                    - Modera\Component\SeleniumTools\Behat\Context\MJRContext
+                    - Modera\Component\SeleniumTools\Behat\Context\ExtJsGridContext
+
+The main thing here to pay attention to is that we are telling Behat to use "ActorsExtension", this extension
+is responsible for configuring actors as well as video recorder. In behat.yml configuration file you can use
+refer to environment variables by wrapping your words with percentage sign. As you can see in this specific
+configuration file we are telling behat to attempt to extract three values from the environment:
+- `BEHAT_SELENIUM_HOST` - host name where Selenium is running. If you are using `Resources/dockerized-video-recorder/whaler.yml`
+seed configuration file then `http://selenium-hub:4444/wd/hub` must be used for this variable.
+- `BEHAT_VR_HOST` - a host name where you have FFMPEG REST server running. If seed `whaler.yml` is used then you can use
+`http://vr-nginx`.
+- `BEHAT_BACKEND_BASE_URL` - in this specific scenario this variable is used to tell what URL actor should start with.
+
+In you `behat.yml` you may not use environment variables to to store configuration, but it is considered a good practise
+to avoid storing environment-depending configuration data in configuration files.
+
+When the above configuration file is used (and you have Modera Foundation installed), then in order to run the
+ tests (which are located by default in [features](https://github.com/modera/foundation-standard/tree/master/features) 
+ directory) you can run this command:
+
+`whaler run php. "./bin/behat" -e BEHAT_SELENIUM_HOST=http://selenium-hub:4444/wd/hub -e BEHAT_VR_HOST=http://vr-nginx -e BEHAT_BACKEND_BASE_URL=http://nginx/app_dev.php/backend/`
+
+### Writing your own multi-user aware Behat context files
+
+TODO explain how one would write multi-user Behat files like MJRContext and ExtJsGridContext.
+
 # Testing ExtJs/MJR application (experimental)
+
+TODO Expalin how to use MJRContext, ExtJsGridContext
