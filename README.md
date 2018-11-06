@@ -342,7 +342,7 @@ When the above configuration file is used (and you have Modera Foundation instal
  tests (which are located by default in [features](https://github.com/modera/foundation-standard/tree/master/features) 
  directory) you can run this command:
 
-`whaler run php. "./bin/behat" -e BEHAT_SELENIUM_HOST=http://selenium-hub:4444/wd/hub -e BEHAT_VR_HOST=http://vr-nginx -e BEHAT_BACKEND_BASE_URL=http://nginx/app_dev.php/backend/`
+`whaler run php. "./vendor/bin/behat" -e BEHAT_SELENIUM_HOST=http://selenium-hub:4444/wd/hub -e BEHAT_VR_HOST=http://vr-nginx -e BEHAT_BACKEND_BASE_URL=http://nginx/app_dev.php/backend/`
 
 ### Writing your own multi-user aware Behat context files
 

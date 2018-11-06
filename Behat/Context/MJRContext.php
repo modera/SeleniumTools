@@ -14,7 +14,7 @@ use Modera\Component\SeleniumTools\Querying\ExtDeferredQueryHandler;
 use Modera\Component\SeleniumTools\Querying\By;
 use Facebook\WebDriver\WebDriverKeys;
 
-require_once 'PHPUnit/Framework/Assert/Functions.php';
+require_once __DIR__ . '/../../../../phpunit/phpunit/src/Framework/Assert/Functions.php';
 
 /**
  * Defines application features from the specific context.

@@ -1,4 +1,4 @@
 #!/bin/bash
 
-@me ready in 3s
-php5-fpm -R
+@whaler wait 5s
+php7-fpm -R
