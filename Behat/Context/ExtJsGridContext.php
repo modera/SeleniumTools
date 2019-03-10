@@ -15,6 +15,65 @@ use Modera\Component\SeleniumTools\Querying\ExtDeferredQueryHandler;
 class ExtJsGridContext extends HarnessAwareContext
 {
     /**
+     * @When in grid :tid I click column :columnLabel at position :position
+     */
+    public function inGridClickColumnAtPosition($tid, $columnLabel, $position)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $position, $columnLabel) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var column = grid.down("gridcolumn[text=%columnLabel%]");
+var cellCssSelector = grid.getView().getCellSelector(column);
+var cell = Ext.query(cellCssSelector)[%position%];
+
+return cell.id;
+JS;
+            $js = str_replace(['%columnLabel%', '%position%'], [$columnLabel, $position], $js);
+
+            $cellDomId = $q->runWhenComponentAvailable("grid[tid=$tid] ", $js);
+            $cell = $admin->findElement(By::id($cellDomId));
+            $admin->action()->doubleClick($cell)->perform();
+        });
+    }
+
+    /**
+     * @When in grid :tid I click column :columnLabel in row which contains :expectedText piece of text
+     */
+    public function inGridIClickColumnAtRowWhichContainsPieceOfText($tid, $columnLabel, $expectedText)
+    {
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $columnLabel) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var store = grid.getStore();
+var columns = grid.query("gridcolumn");
+
+var position = -1;
+Ext.each(columns, function(column) {
+    if (-1 === position) {
+        position = store.find(column.dataIndex, '%expectedValue%')
+    }
+});
+
+if (-1 === position) {
+    return false;
+}
+
+var column = grid.down("gridcolumn[text=%columnLabel%]");
+var cellCssSelector = grid.getView().getCellSelector(column);
+var cell = Ext.query(cellCssSelector)[position];
+
+return cell.id;
+JS;
+            $js = str_replace(['%columnLabel%', '%expectedValue%'], [$columnLabel, $expectedText], $js);
+
+            $cellDomId = $q->runWhenComponentAvailable("grid[tid=$tid] ", $js);
+            $cell = $admin->findElement(By::id($cellDomId));
+            $admin->action()->doubleClick($cell)->perform();
+        });
+    }
+
+    /**
      * @When in grid :tid I double-click column :columnLabel at position :position
      */
     public function inGridDoubleClickColumnAtPosition($tid, $columnLabel, $position)
