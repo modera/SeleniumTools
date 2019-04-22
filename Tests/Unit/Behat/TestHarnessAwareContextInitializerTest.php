@@ -6,6 +6,7 @@ use Behat\Behat\Context\Context;
 use Modera\Component\SeleniumTools\Behat\HarnessAwareContextInterface;
 use Modera\Component\SeleniumTools\Behat\TestHarnessAwareContextInitializer;
 use Modera\Component\SeleniumTools\Behat\TestHarnessFactory;
+use PHPUnit\Framework\TestCase;
 
 class DummyHarnessAwareContext implements Context, HarnessAwareContextInterface
 {
@@ -21,7 +22,7 @@ class DummyHarnessAwareContext implements Context, HarnessAwareContextInterface
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-class TestHarnessAwareContextInitializerTest extends \PHPUnit_Framework_TestCase
+class TestHarnessAwareContextInitializerTest extends TestCase
 {
     public function testInitializeContext_properContextInUse()
     {

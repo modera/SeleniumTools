@@ -10,12 +10,13 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-class ActorsExtensionTest extends \PHPUnit_Framework_TestCase
+class ActorsExtensionTest extends TestCase
 {
     public function testLoad()
     {

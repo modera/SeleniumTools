@@ -7,6 +7,7 @@ use Facebook\WebDriver\WebDriverOptions;
 use Facebook\WebDriver\WebDriverWindow;
 use Modera\Component\SeleniumTools\Actor;
 use Modera\Component\SeleniumTools\ActorBrowserController;
+use PHPUnit\Framework\TestCase;
 
 require_once __DIR__.'/../Fixtures/SleepFuncOverride.php';
 
@@ -14,7 +15,7 @@ require_once __DIR__.'/../Fixtures/SleepFuncOverride.php';
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-class ActorBrowserControllerTest extends \PHPUnit_Framework_TestCase
+class ActorBrowserControllerTest extends TestCase
 {
     private $actorMock;
 

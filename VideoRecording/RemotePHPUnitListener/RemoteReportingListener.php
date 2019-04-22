@@ -4,15 +4,17 @@ namespace Modera\Component\SeleniumTools\VideoRecording\RemotePHPUnitListener;
 
 use Exception;
 use Modera\Component\SeleniumTools\VideoRecording\GuzzleClientTrait;
-use PHPUnit_Framework_AssertionFailedError;
-use PHPUnit_Framework_Test as Test;
-use PHPUnit_Framework_TestSuite as TestSuite;
+use PHPUnit\Framework\AssertionFailedError;
+use PHPUnit\Framework\Test;
+use PHPUnit\Framework\TestSuite;
+use PHPUnit\Framework\TestListener;
+use PHPUnit\Framework\Warning;
 
 /**
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-class RemoteReportingListener implements \PHPUnit_Framework_TestListener
+class RemoteReportingListener implements TestListener
 {
     use GuzzleClientTrait;
 
@@ -42,7 +44,11 @@ class RemoteReportingListener implements \PHPUnit_Framework_TestListener
     {
     }
 
-    public function addFailure(Test $test, PHPUnit_Framework_AssertionFailedError $e, $time)
+    public function addWarning(Test $test, Warning $e, $time)
+    {
+    }
+
+    public function addFailure(Test $test, AssertionFailedError $e, $time)
     {
     }
 

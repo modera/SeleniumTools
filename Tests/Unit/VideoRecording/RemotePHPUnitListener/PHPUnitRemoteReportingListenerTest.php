@@ -4,12 +4,13 @@ namespace Modera\Component\SeleniumTools\Tests\Unit\VideoRecording;
 
 use GuzzleHttp\Client;
 use Modera\Component\SeleniumTools\Tests\Fixtures\PHPUnitRemoteReportingListenerStub;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-class RemoteReportingListenerTest extends \PHPUnit_Framework_TestCase
+class RemoteReportingListenerTest extends TestCase
 {
     /**
      * @var PHPUnitRemoteReportingListenerStub

@@ -13,8 +13,7 @@ use Modera\Component\SeleniumTools\PageObjects\MJRBackendPageObject;
 use Modera\Component\SeleniumTools\Querying\ExtDeferredQueryHandler;
 use Modera\Component\SeleniumTools\Querying\By;
 use Facebook\WebDriver\WebDriverKeys;
-
-require_once __DIR__ . '/../../../../phpunit/phpunit/src/Framework/Assert/Functions.php';
+use PHPUnit\Framework\Assert;
 
 /**
  * Defines application features from the specific context.
@@ -52,6 +51,19 @@ class MJRContext extends HarnessAwareContext
     {
         $this->runActiveActor(function($admin, $actor, MJRBackendPageObject $backend) use($section) {
             $backend->clickMenuItemWithLabel($section);
+
+            sleep(1);
+        });
+    }
+
+    /**
+     * @Then I activate :tab tab
+     */
+    public function iActivateTab($tab)
+    {
+
+        $this->runActiveActor(function($admin, $actor, MJRBackendPageObject $backend) use($tab) {
+            $backend->clickTabItemWithLabel($tab);
 
             sleep(1);
         });
@@ -99,7 +111,7 @@ class MJRContext extends HarnessAwareContext
     public function theAPageMustBeReloadedAndInitialLoginPageMustBeDisplayed()
     {
         $this->runActiveActor(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
-            assertNull($admin->executeScript("ModeraFoundation.getApplication().getContainer().get('security_context').getUser()"));
+            Assert::assertNull($admin->executeScript("ModeraFoundation.getApplication().getContainer().get('security_context').getUser()"));
         });
     }
 
@@ -123,7 +135,7 @@ class MJRContext extends HarnessAwareContext
     public function windowIsNoLongerDisplayed()
     {
         $this->runActiveActor(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) {
-            assertNull($admin->executeScript('Ext.ComponentQuery.query("window[tid=authRequiredWindow]")[0]'));
+            Assert::assertNull($admin->executeScript('Ext.ComponentQuery.query("window[tid=authRequiredWindow]")[0]'));
         });
     }
 
@@ -226,14 +238,14 @@ class MJRContext extends HarnessAwareContext
         $this->runActiveActor(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $position, $columnLabel, $expectedValue) {
             $dataIndex = $q->runWhenComponentAvailable("grid[tid=$tid] gridcolumn[text=$columnLabel]", 'return firstCmp.dataIndex');
 
-            assertNotNull($dataIndex);
+            Assert::assertNotNull($dataIndex);
 
             $givenValue = $q->runWhenComponentAvailable(
                 "grid[tid=$tid]",
                 "var view = firstCmp.getView(); var node = view.getNode($position); return view.getRecord(node).get('$dataIndex')"
             );
 
-            assertEquals($expectedValue, $givenValue);
+            Assert::assertEquals($expectedValue, $givenValue);
         });
     }
 
@@ -243,28 +255,42 @@ class MJRContext extends HarnessAwareContext
      *
      * @When I type :text in field :tid
      * @When I type :text in textarea :tid
+     *
+     * @When I type text :text in :nth field :tid
+     * @When I type text :text in :nth textarea :tid
+     *
+     * @When I type :text in :nth field :tid
+     * @When I type :text in :nth textarea :tid
      */
-    public function iTypeTextInField($text, $tid)
+    public function iTypeTextInField($text, $tid, $nth = 1)
     {
-        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($text, $tid) {
+        if ($nth == 'first') {
+            $nth = 1;
+        } else if ($nth == 'second') {
+            $nth = 2;
+        } else if ($nth == 'third') {
+            $nth = 3;
+        }
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($text, $tid, $nth) {
             // We cannot simply query by $tid, because it returns HTML <table> element instead of <input> that we need
             $js = <<<'JS'
     var fieldDomId = firstCmp.el.dom.id;
-    
+
     var inputs = Ext.query("#"+fieldDomId+" input");
     if (inputs[0]) {
         return inputs[0].id;
     }
-    
+
     var textareas = Ext.query("#"+fieldDomId+" textarea");
     if (textareas[0]) {
         return textareas[0].id;
     }
-            
+
     throw "Unable to find neither 'input' nor 'textarea' for given TID.";
 JS;
 
-            $input = By::id($q->runWhenComponentAvailable("component[tid=$tid]", $js));
+            $input = By::id($q->runWhenComponentAvailable("component[tid=$tid]:nth-child({$nth}n)", $js));
 
             $element = $admin->findElement($input);
             $element->sendKeys($text);
@@ -294,17 +320,17 @@ JS;
             // We cannot simply query by $tid, because it returns HTML <table> element instead of <input> that we need
             $js = <<<'JS'
     var fieldDomId = firstCmp.el.dom.id;
-    
+
     var inputs = Ext.query("#"+fieldDomId+" input");
     if (inputs[0]) {
         return inputs[0].id;
     }
-    
+
     var textareas = Ext.query("#"+fieldDomId+" textarea");
     if (textareas[0]) {
         return textareas[0].id;
     }
-            
+
     throw "Unable to find neither 'input' nor 'textarea' for given TID.";
 JS;
 
@@ -336,7 +362,7 @@ JS;
     public function iSeePieceOfText($text)
     {
         $this->runActiveActor(function(RemoteWebDriver $admin) use($text) {
-            assertContains($text, $admin->getPageSource());
+            Assert::assertContains($text, $admin->getPageSource());
         });
     }
 
@@ -361,7 +387,7 @@ JS;
     public function iAmNotAuthenticated()
     {
         $this->isActorAuthenticated(function($isAuthenticated) {
-            assertEquals(false, $isAuthenticated);
+            Assert::assertEquals(false, $isAuthenticated);
         });
     }
 
@@ -372,7 +398,7 @@ JS;
     public function iAmSuccessfullyAuthenticated()
     {
         $this->isActorAuthenticated(function($isAuthenticated) {
-            assertEquals(true, $isAuthenticated);
+            Assert::assertEquals(true, $isAuthenticated);
         });
     }
 
@@ -416,6 +442,82 @@ return [button.getWidth(), button.getHeight(), button.el.dom.id];
 JS;
 
             $result = $q->runWhenComponentAvailable("button[tid=$tid] ", $js);
+
+            list($width, $height, $domId) = $result;
+
+            $button = $admin->findElement(By::id($domId));
+
+            $admin->action()
+                ->moveToElement($button, $width - 5, 5)
+                ->click()
+                ->perform()
+            ;
+        });
+    }
+
+    /**
+     * @When I click :button button in confirmation window
+     */
+    public function IClickButtonInConfirmationWindow($button)
+    {
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($button) {
+
+            $button = $q->extComponentDomId("messagebox button[text={$button}]");
+
+            $admin->findElement($button)->click();
+
+            sleep(2);
+
+        });
+    }
+
+    /**
+     * @When I select option :option in combo :tid
+     * @When I select option :option in :nth combo :tid
+     */
+    public function iSelectOptionsInCombo($option, $tid, $nth = 1)
+    {
+
+        if ($nth == 'first') {
+            $nth = 1;
+        } else if ($nth == 'second') {
+            $nth = 2;
+        } else if ($nth == 'third') {
+            $nth = 3;
+        }
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $option, $nth) {
+            $js = <<<JS
+var combo = firstCmp;
+var store = combo.getStore();
+var record = store.findRecord(combo.displayField, '%expectedValue%');
+if (!record) {
+    throw "Unable to find a record where option value is equal to '%expectedValue%'." ;
+}
+combo.select(record);
+return true;
+JS;
+            $js = str_replace(['%expectedValue%'], [$option], $js);
+
+            $q->runWhenComponentAvailable("combo[tid=$tid]:nth-child({$nth}n)", $js);
+
+        });
+    }
+
+    /**
+     * @When I expand options for select :tid
+     */
+    public function iExpandOptionsForSelect($tid)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid) {
+            $js = <<<JS
+var button = firstCmp;
+
+return [button.getWidth(), button.getHeight(), button.el.dom.id];
+JS;
+
+            $result = $q->runWhenComponentAvailable("combobox[tid=$tid] ", $js);
 
             list($width, $height, $domId) = $result;
 

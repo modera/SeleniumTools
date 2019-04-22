@@ -5,6 +5,7 @@ namespace Modera\Component\SeleniumTools\Tests\Unit;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Modera\Component\SeleniumTools\Actor;
 use Modera\Component\SeleniumTools\EnvironmentAwareDriverFactory;
+use PHPUnit\Framework\TestCase;
 
 class FooEnvironmentAwareDriverFactory extends EnvironmentAwareDriverFactory
 {
@@ -20,7 +21,7 @@ class FooEnvironmentAwareDriverFactory extends EnvironmentAwareDriverFactory
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-class EnvironmentAwareDriverFactoryTest extends \PHPUnit_Framework_TestCase
+class EnvironmentAwareDriverFactoryTest extends TestCase
 {
     public function testCreateDriver()
     {

@@ -7,12 +7,13 @@ use Behat\Gherkin\Node\FeatureNode;
 use Behat\Gherkin\Node\ScenarioInterface;
 use GuzzleHttp\Client;
 use Modera\Component\SeleniumTools\Behat\RemoteReportingListener;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-class RemoteReportingListenerTest extends \PHPUnit_Framework_TestCase
+class RemoteReportingListenerTest extends TestCase
 {
     private $clientMock;
 

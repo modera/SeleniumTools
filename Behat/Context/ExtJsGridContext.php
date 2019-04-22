@@ -7,6 +7,7 @@ use Modera\Component\SeleniumTools\Actor;
 use Modera\Component\SeleniumTools\PageObjects\MJRBackendPageObject;
 use Modera\Component\SeleniumTools\Querying\By;
 use Modera\Component\SeleniumTools\Querying\ExtDeferredQueryHandler;
+use PHPUnit\Framework\Assert;
 
 /**
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
@@ -140,7 +141,7 @@ JS;
 
             $rowPosition = $q->runWhenComponentAvailable("grid[tid=$tid]", $js);
 
-            assertTrue(-1 == $rowPosition);
+            Assert::assertTrue(-1 == $rowPosition);
         });
     }
 
@@ -149,7 +150,7 @@ JS;
      */
     public function gridMustContainRowWithValue($tid, $expectedValue)
     {
-        assertTrue($this->isRowWithTextFoundInGrid($tid, $expectedValue));
+        Assert::assertTrue($this->isRowWithTextFoundInGrid($tid, $expectedValue));
     }
 
     /**
@@ -157,7 +158,7 @@ JS;
      */
     public function gridMustNotContainRowWithValue($tid, $expectedValue)
     {
-        assertFalse($this->isRowWithTextFoundInGrid($tid, $expectedValue));
+        Assert::assertFalse($this->isRowWithTextFoundInGrid($tid, $expectedValue));
     }
 
     private function isRowWithTextFoundInGrid($tid, $expectedValue)
@@ -171,10 +172,10 @@ var store = grid.getStore();
 var columns = grid.query("gridcolumn");
 
 var isFound = false;
-Ext.each(columns, function(column) { 
+Ext.each(columns, function(column) {
     if (-1 != store.find(column.dataIndex, '%expectedValue%')) {
         isFound = true;
-        
+
         return false;
     }
 });
@@ -203,8 +204,8 @@ var columns = grid.query("gridcolumn");
 
 var rowPosition = -1;
 Ext.each(columns, function(column) {
-    rowPosition = store.find(column.dataIndex, '%expectedText%', 0, true); 
-    if (-1 != rowPosition) {        
+    rowPosition = store.find(column.dataIndex, '%expectedText%', 0, true);
+    if (-1 != rowPosition) {
         return false;
     }
 });
@@ -219,7 +220,7 @@ JS;
             $js = str_replace(['%expectedText%'], [$expectedText], $js);
 
             $domId = $q->runWhenComponentAvailable("grid[tid=$tid] ", $js);
-            assertNotEquals(-1, $domId);
+            Assert::assertNotEquals(-1, $domId);
 
             $admin->findElement(By::id($domId))->click();
         });
@@ -262,8 +263,8 @@ var columns = grid.query("gridcolumn");
 
 var rowVerticalPosition = -1;
 Ext.each(columns, function(column) {
-    rowVerticalPosition = store.find(column.dataIndex, '%expectedText%', 0, true); 
-    if (-1 != rowVerticalPosition) {        
+    rowVerticalPosition = store.find(column.dataIndex, '%expectedText%', 0, true);
+    if (-1 != rowVerticalPosition) {
         return false;
     }
 });
@@ -290,7 +291,7 @@ JS;
         $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $rowsCount) {
             $query = "grid[tid=$tid]";
 
-            assertGreaterThanOrEqual($rowsCount, $q->runWhenComponentAvailable($query, 'return firstCmp.getStore().getCount();'));
+            Assert::assertGreaterThanOrEqual($rowsCount, $q->runWhenComponentAvailable($query, 'return firstCmp.getStore().getCount();'));
         });
     }
 
@@ -302,7 +303,7 @@ JS;
         $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $rowsCount) {
             $query = "grid[tid=$tid]";
 
-            assertEquals($rowsCount, $q->runWhenComponentAvailable($query, 'return firstCmp.getStore().getCount();'));
+            Assert::assertEquals($rowsCount, $q->runWhenComponentAvailable($query, 'return firstCmp.getStore().getCount();'));
         });
     }
 }

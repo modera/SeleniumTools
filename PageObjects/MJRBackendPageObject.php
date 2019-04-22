@@ -85,6 +85,14 @@ class MJRBackendPageObject
     /**
      * @param string $label
      */
+    public function clickTabItemWithLabel($label)
+    {
+        $this->driver->findElement($this->getDeferredQueryHandler()->extComponentDomId("tab[text^=$label]"))->click();
+    }
+
+    /**
+     * @param string $label
+     */
     public function clickToolsSectionWithLabel($label)
     {
         $this->driver->findElement(

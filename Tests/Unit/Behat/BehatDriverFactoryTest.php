@@ -6,6 +6,7 @@ use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Modera\Component\SeleniumTools\Actor;
 use Modera\Component\SeleniumTools\Behat\BehatDriverFactory;
 use Modera\Component\SeleniumTools\Behat\InvalidConfigException;
+use PHPUnit\Framework\TestCase;
 
 class FooBehatDriverFactory extends BehatDriverFactory
 {
@@ -27,7 +28,7 @@ class FooBehatDriverFactory extends BehatDriverFactory
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
  * @copyright 2017 Modera Foundation
  */
-class BehatDriverFactoryTest extends \PHPUnit_Framework_TestCase
+class BehatDriverFactoryTest extends TestCase
 {
     public function testCreateDriver()
     {
