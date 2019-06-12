@@ -70,6 +70,21 @@ class MJRContext extends HarnessAwareContext
     }
 
     /**
+     * @Then I activate left menu item :tab
+     */
+    public function iActivateLeftMenuItem($tab)
+    {
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, Actor $actor, MJRBackendPageObject $backend, ExtDeferredQueryHandler $q) use($tab) {
+            $button = $q->extComponentDomId("mfc-touchmenu component[tid=$tab]");
+
+            $admin->findElement($button)->click();
+
+            sleep(2);
+        });
+    }
+
+    /**
      * @Given I click on :section in Tools view
      */
     public function iClickOnSectionInToolsView($section)
@@ -250,6 +265,59 @@ class MJRContext extends HarnessAwareContext
     }
 
     /**
+     * @When I replace text :text in field :tid
+     * @When I replace text :text in textarea :tid
+     *
+     * @When I replace :text in field :tid
+     * @When I replace :text in textarea :tid
+     *
+     * @When I replace text :text in :nth field :tid
+     * @When I replace text :text in :nth textarea :tid
+     *
+     * @When I replace :text in :nth field :tid
+     * @When I replace :text in :nth textarea :tid
+     */
+    public function iReplaceTextInField($text, $tid, $nth = 1)
+    {
+        if ($nth == 'first') {
+            $nth = 1;
+        } else if ($nth == 'second') {
+            $nth = 2;
+        } else if ($nth == 'third') {
+            $nth = 3;
+        } else if ($nth == 'fourth') {
+            $nth = 4;
+        }
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($text, $tid, $nth) {
+            // We cannot simply query by $tid, because it returns HTML <table> element instead of <input> that we need
+            $js = <<<'JS'
+    var fieldDomId = firstCmp.el.dom.id;
+
+    var inputs = Ext.query("#"+fieldDomId+" input");
+    if (inputs[0]) {
+        return inputs[0].id;
+    }
+
+    var textareas = Ext.query("#"+fieldDomId+" textarea");
+    if (textareas[0]) {
+        return textareas[0].id;
+    }
+
+    throw "Unable to find neither 'input' nor 'textarea' for given TID.";
+JS;
+
+            $input = By::id($q->runWhenComponentAvailable("component[tid=$tid]:nth-child({$nth}n)", $js));
+
+            $element = $admin->findElement($input);
+            $element->clear();
+            $element->sendKeys($text);
+
+            sleep(1);
+        });
+    }
+
+    /**
      * @When I type text :text in field :tid
      * @When I type text :text in textarea :tid
      *
@@ -270,6 +338,8 @@ class MJRContext extends HarnessAwareContext
             $nth = 2;
         } else if ($nth == 'third') {
             $nth = 3;
+        } else if ($nth == 'fourth') {
+            $nth = 4;
         }
 
         $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($text, $tid, $nth) {
@@ -473,6 +543,25 @@ JS;
     }
 
     /**
+     * @When I choose date :date in field :tid
+     */
+    public function iChooseDateInField($date, $tid, $nth = 1)
+    {
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $date, $nth) {
+            $js = <<<JS
+var dateField = firstCmp;
+dateField.setValue(new Date('%expectedValue%'));
+return true;
+JS;
+            $js = str_replace(['%expectedValue%'], [$date], $js);
+
+            $q->runWhenComponentAvailable("component[tid=$tid]", $js);
+
+        });
+    }
+
+    /**
      * @When I select option :option in combo :tid
      * @When I select option :option in :nth combo :tid
      */
@@ -485,6 +574,8 @@ JS;
             $nth = 2;
         } else if ($nth == 'third') {
             $nth = 3;
+        } else if ($nth == 'fourth') {
+            $nth = 4;
         }
 
         $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $option, $nth) {
@@ -501,6 +592,36 @@ JS;
             $js = str_replace(['%expectedValue%'], [$option], $js);
 
             $q->runWhenComponentAvailable("combo[tid=$tid]:nth-child({$nth}n)", $js);
+
+        });
+    }
+
+    /**
+     * @When I select radio option :option
+     */
+    public function iSelectRadioOption($option)
+    {
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($option) {
+
+            // We cannot simply query by $tid, because it returns HTML <table> element instead of <input> that we need
+            $js = <<<'JS'
+    var fieldDomId = firstCmp.el.dom.id;
+
+    var inputs = Ext.query("#"+fieldDomId+" input");
+    if (inputs[0]) {
+        return inputs[0].id;
+    }
+
+    throw "Unable to find 'input' for given TID.";
+JS;
+
+            // We cannot simply query by $tid, because it returns HTML <table> element instead of <input> that we need
+            $inputEl = By::id($q->runWhenComponentAvailable("radiofield[tid=$option]", $js));
+
+            $admin->findElement($inputEl)->click();
+
+            sleep(1);
 
         });
     }

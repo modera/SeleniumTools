@@ -3,6 +3,7 @@
 namespace Modera\Component\SeleniumTools\Behat\Context;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Facebook\WebDriver\WebDriverKeys;
 use Modera\Component\SeleniumTools\Actor;
 use Modera\Component\SeleniumTools\PageObjects\MJRBackendPageObject;
 use Modera\Component\SeleniumTools\Querying\By;
@@ -304,6 +305,51 @@ JS;
             $query = "grid[tid=$tid]";
 
             Assert::assertEquals($rowsCount, $q->runWhenComponentAvailable($query, 'return firstCmp.getStore().getCount();'));
+        });
+    }
+
+    /**
+     * @Then in grid :tid I change :expectedText to :value
+     */
+    public function inGridISetPropertyValue($tid, $expectedText, $value)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $value) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var view = grid.getView();
+var store = grid.getStore();
+
+var rowPosition = store.find('name', '%expectedText%', 0, true);
+
+var isRowFound = -1 != rowPosition;
+if (isRowFound) {
+    return Ext.query('#'+grid.el.dom.id+' '+view.getDataRowSelector())[rowPosition].id;
+} else {
+    return -1;
+}
+JS;
+            $js = str_replace(['%expectedText%'], [$expectedText], $js);
+
+            $domId = $q->runWhenComponentAvailable("propertygrid[tid=$tid] ", $js);
+            Assert::assertNotEquals(-1, $domId);
+
+            $el = $admin->findElement(By::id($domId));
+            $el->getLocationOnScreenOnceScrolledIntoView();
+            $el->click();
+
+            sleep(1);
+
+            $admin->switchTo()->activeElement()->clear();
+
+            $admin->getKeyboard()->sendKeys($value);
+
+            $admin->getKeyboard()
+                ->sendKeys(array(
+                    WebDriverKeys::ENTER,
+                ));
+
+            sleep(1);
+
         });
     }
 }
