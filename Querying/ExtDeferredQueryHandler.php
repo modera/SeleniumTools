@@ -36,7 +36,7 @@ class ExtDeferredQueryHandler
      *
      * @return string  DOM element ID that represents a first component resolved by given $query
      */
-    public function extComponentDomId($query, $timeout = 30)
+    public function extComponentDomId($query, $timeout = 60)
     {
         $startTime = time();
 
@@ -69,7 +69,7 @@ class ExtDeferredQueryHandler
      *
      * @return string
      */
-    public function runWhenComponentAvailable($query, $stmt = 'return true;', $timeout = 30)
+    public function runWhenComponentAvailable($query, $stmt = 'return true;', $timeout = 60)
     {
         return $this->doRunWhenComponentAvailable($query, $stmt, time(), $timeout);
     }
@@ -78,7 +78,7 @@ class ExtDeferredQueryHandler
      * @param string $query
      * @param int $timeout
      */
-    public function waitUntilComponentAvailable($query, $timeout = 30)
+    public function waitUntilComponentAvailable($query, $timeout = 60)
     {
         $this->runWhenComponentAvailable($query, 'return true;', $timeout);
     }
@@ -91,7 +91,7 @@ class ExtDeferredQueryHandler
      *
      * @return string
      */
-    public function extGridColumnWithValue($query, $fieldName, $fieldValue, $timeout = 30)
+    public function extGridColumnWithValue($query, $fieldName, $fieldValue, $timeout = 60)
     {
         $stmt = <<<'JST'
     var grid = result[0];
@@ -117,7 +117,7 @@ JST;
      *
      * @return string
      */
-    public function extDataviewColumnWithValue($query, $fieldName, $fieldValue, $timeout = 30)
+    public function extDataviewColumnWithValue($query, $fieldName, $fieldValue, $timeout = 60)
     {
         $stmt = <<<'JST'
     var dataView = result[0];
@@ -135,7 +135,7 @@ JST;
         return WebDriverBy::id($this->doRunWhenComponentAvailable($query, $stmt, $startTime, $timeout));
     }
 
-    private function doRunWhenComponentAvailable($query, $stmt, $startTime, $timeout = 30)
+    private function doRunWhenComponentAvailable($query, $stmt, $startTime, $timeout = 60)
     {
         // If we return a boolean value from a function then we will get
         // "java.lang.Boolean cannot be cast to java.lang.String" exception by Selenium, so to address this issue
