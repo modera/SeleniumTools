@@ -172,6 +172,7 @@ class MJRContext extends HarnessAwareContext
      * @Then view :tid is visible
      * @Then panel :tid is visible
      * @Then grid :tid is visible
+     * @Then badge :tid is visible
      * @Then window :tid is visible
      *
      * @Then window :tid should stay visible
@@ -318,6 +319,61 @@ JS;
     }
 
     /**
+     * @Then I see text :text in :tid
+     * @Then I see value :text in :tid
+     * @Then I see text :text in field :tid
+     * @Then I see text :text in textarea :tid
+     * @Then Value in field :tid must be equal to :text
+     * @Then Value in textarea :tid must be equal to :text
+     *
+     * @Then I see :text in field :tid
+     * @Then I see :text in textarea :tid
+     * @Then Value in :tid must be equal to :text
+     *
+     * @Then I see text :text in :nth field :tid
+     * @Then I see text :text in :nth textarea :tid
+     * @Then Value in :nth field :tid must be equal to :text
+     * @Then Value in :nth textarea :tid must be equal to :text
+     *
+     * @Then I see :text in :nth field :tid
+     * @Then I see :text in :nth textarea :tid
+     * @Then Value in :nth :tid field must be equal to :text
+     * @Then Value in :nth :tid textarea must be equal to :text
+     */
+    public function iSeeValueInField($text, $tid, $nth = 1)
+    {
+        if ($nth == 'first') {
+            $nth = 1;
+        } else if ($nth == 'second') {
+            $nth = 2;
+        } else if ($nth == 'third') {
+            $nth = 3;
+        } else if ($nth == 'fourth') {
+            $nth = 4;
+        }
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($text, $tid, $nth) {
+
+            $js = <<<'JS'
+    if (firstCmp.xtype == 'combobox' || firstCmp.xtype == 'combo') {
+         return firstCmp.getDisplayValue();
+    } else if (firstCmp.xtype == 'button') {
+         return firstCmp.text;
+    } else if (firstCmp.xtype == 'box') {
+         return firstCmp.html;
+    } else {
+         return firstCmp.getValue();
+    }
+JS;
+
+            $value = $q->runWhenComponentAvailable("component[tid=$tid]:nth-child({$nth}n)", $js);
+var_dump($text, $value, $text == $value);
+            //Assert::assertEquals($text, $value);
+
+        });
+    }
+
+    /**
      * @When I type text :text in field :tid
      * @When I type text :text in textarea :tid
      *
@@ -411,6 +467,17 @@ JS;
             $input->clear();
             $input->sendKeys(WebDriverKeys::UP);
 
+            sleep(1);
+        });
+    }
+
+    /**
+     * @When I load url :url
+     */
+    public function iLoadUrl($url)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin) use ($url) {
+            $admin->executeScript('window.location = "' . $url.'";');
             sleep(1);
         });
     }
@@ -533,7 +600,7 @@ JS;
 
         $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($button) {
 
-            $button = $q->extComponentDomId("messagebox button[text={$button}]");
+            $button = $q->extComponentDomId("messagebox button[itemId={$button}]");
 
             $admin->findElement($button)->click();
 

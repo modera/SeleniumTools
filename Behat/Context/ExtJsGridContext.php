@@ -9,6 +9,7 @@ use Modera\Component\SeleniumTools\PageObjects\MJRBackendPageObject;
 use Modera\Component\SeleniumTools\Querying\By;
 use Modera\Component\SeleniumTools\Querying\ExtDeferredQueryHandler;
 use PHPUnit\Framework\Assert;
+use Behat\Gherkin\Node\TableNode;
 
 /**
  * @author    Sergei Lissovski <sergei.lissovski@modera.org>
@@ -192,6 +193,42 @@ JS;
     }
 
     /**
+     * @Then in workflow menu I click on :expectedText stage
+     */
+    public function inWorkflowMenuIclickStage($expectedText)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($expectedText) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var view = grid.getView();
+var store = grid.getStore();
+var columns = grid.query("gridcolumn");
+var rowPosition =  store.findExact('name', '%expectedText%');
+var isRowFound = -1 != rowPosition;
+if (isRowFound) {
+    return Ext.query('#'+grid.el.dom.id+' '+view.getDataRowSelector())[rowPosition].id;
+} else {
+    return -1;
+}
+JS;
+            $js = str_replace(['%expectedText%'], [$expectedText], $js);
+
+            $domId = $q->runWhenComponentAvailable("grid[tid=workflowStages] ", $js);
+            Assert::assertNotEquals(-1, $domId);
+
+            $button = $admin->findElement(By::id($domId));
+
+
+            $admin->action()
+                ->moveToElement($button, 10, 10)
+                ->click()
+                ->perform()
+            ;
+
+        });
+    }
+
+    /**
      * @Then in grid :tid I click a row which contains :expectedText piece of text
      */
     public function inGridIClickARowWhichContainsPieceOfText($tid, $expectedText)
@@ -251,6 +288,14 @@ JS;
     }
 
     /**
+     * @When in grid :tid I click first row
+     */
+    public function inGridIClickFirstRow($tid)
+    {
+        $this->inGridIClickRowAtPosition($tid, 0);
+    }
+
+    /**
      * @When in grid :tid I click a column :columnLabel where one of the cells contain :expectedText piece of text
      */
     public function inGridIClickCellWhereOneOfTheCellsContainPieceOfText($tid, $columnLabel, $expectedText)
@@ -285,18 +330,6 @@ JS;
     }
 
     /**
-     * @Then grid :tid must contain at least :rowsCount rows
-     */
-    public function gridMustContainAtLeastNRows($tid, $rowsCount)
-    {
-        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $rowsCount) {
-            $query = "grid[tid=$tid]";
-
-            Assert::assertGreaterThanOrEqual($rowsCount, $q->runWhenComponentAvailable($query, 'return firstCmp.getStore().getCount();'));
-        });
-    }
-
-    /**
      * @Then grid :tid must contain :rowsCount rows
      */
     public function gridMustContainRows($tid, $rowsCount)
@@ -306,6 +339,14 @@ JS;
 
             Assert::assertEquals($rowsCount, $q->runWhenComponentAvailable($query, 'return firstCmp.getStore().getCount();'));
         });
+    }
+
+    /**
+     * @Then grid :tid must contain single row
+     */
+    public function gridMustContainSingleRows($tid)
+    {
+        $this->gridMustContainRows($tid, 1);
     }
 
     /**
@@ -351,5 +392,170 @@ JS;
             sleep(1);
 
         });
+    }
+
+    /**
+     * @Then in grid :tid I see :expectedText in row :name
+     * @Then in grid :tid I see :expectedText as value for :name
+     */
+    public function inGridISeePropertyValue($tid, $expectedText, $name)
+    {
+
+
+//        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $name) {
+//            $js = <<<'JS'
+//var grid = firstCmp;
+//var view = grid.getView();
+//var store = grid.getStore();
+//
+//var rowPosition = store.find('name', '%name%', 0, true);
+//
+//var isRowFound = -1 != rowPosition;
+//if (isRowFound) {
+//    return Ext.query('#'+grid.el.dom.id+' '+view.getDataRowSelector())[rowPosition].id;
+//} else {
+//    return -1;
+//}
+//JS;
+//            $js = str_replace(['%name%'], [$name], $js);
+//
+//            $domId = $q->runWhenComponentAvailable("propertygrid[tid=$tid] ", $js);
+//            Assert::assertNotEquals(-1, $domId);
+//
+//            $el = $admin->findElement(By::id($domId));
+//            $el->getLocationOnScreenOnceScrolledIntoView();
+//            $el->click();
+//
+//            sleep(1);
+//
+//            var_dump($admin->switchTo()->activeElement());
+//
+//            //$admin->getKeyboard()->sendKeys($value);
+//
+//            $admin->getKeyboard()
+//                ->sendKeys(array(
+//                    WebDriverKeys::ENTER,
+//                ));
+//
+//            sleep(1);
+//
+//        });
+
+
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $name) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var store = grid.getStore();
+return store.findRecord('name', '%name%').get('value');
+
+JS;
+            $js = str_replace(['%name%'], [$name], $js);
+
+            $value = $q->runWhenComponentAvailable("propertygrid[tid=$tid]", $js);
+
+            Assert::assertEquals($expectedText, $value);
+
+        });
+    }
+
+    /**
+     * @Then in grid :tid I see date :expectedText in row :name
+     */
+    public function inGridISeeDateValue($tid, $expectedText, $name)
+    {
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $name) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var store = grid.getStore();
+return store.findRecord('name', '%name%', 0, true).get('value');
+
+JS;
+            $js = str_replace(['%name%'], [$name], $js);
+
+            $value = $q->runWhenComponentAvailable("propertygrid[tid=$tid]", $js);
+
+            Assert::assertTrue($value != 'null' && $value != '' && $value != 'false' && $value != '-');
+
+        });
+    }
+
+    /**
+     * @Then in grid :tid I see some value in row :name
+     * @Then in grid :tid I see some date in row :name
+     * @Then in grid :tid I see some text in row :name
+     */
+    public function inGridISeePropertySmth($tid, $name)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $name) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var store = grid.getStore();
+return store.findRecord('name', '%name%', 0, true).get('value');
+
+JS;
+            $js = str_replace(['%name%'], [$name], $js);
+
+            $value = $q->runWhenComponentAvailable("propertygrid[tid=$tid]", $js);
+
+            Assert::assertTrue($value != 'null' && $value != '' && $value != 'false' && $value != '-');
+
+        });
+    }
+
+    /**
+     * @Then in grid :tid I see today date in row :name
+     */
+    public function inGridISeeTodayDate($tid, $name)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $name) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var store = grid.getStore();
+return store.findRecord('name', '%name%').get('value');
+
+JS;
+            $js = str_replace(['%name%'], [$name], $js);
+
+            $value = $q->runWhenComponentAvailable("propertygrid[tid=$tid]", $js);
+
+            var_dump([$value, date('Y-m-d'), date('Y-m-d', strtotime($value))]);
+
+            Assert::assertTrue(date('Y-m-d') == date('Y-m-d', strtotime($value)));
+
+        });
+    }
+
+    /**
+     * @Then /grid :tid contains:/
+     */
+    public function gridContains($tid, TableNode $table)
+    {
+        $hash = $table->getHash();
+        foreach ($hash as $row) {
+            // $row['name'], $row['value'], $row['phone']
+
+            var_dump($row);
+
+//            $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $value) {
+//                $js = <<<'JS'
+//var grid = firstCmp;
+//var view = grid.getView();
+//var store = grid.getStore();
+//return store.findRecord('name', '%expectedText%', 0, true).get('value');
+//
+//JS;
+//                $js = str_replace(['%expectedText%'], [$expectedText], $js);
+//
+//                $value = $q->runWhenComponentAvailable("propertygrid[tid=$tid]", $js);
+//
+//                Assert::assertTrue('Y-m-d', date(strtotime($value)) == date('Y-m-d', strtotime($value)));
+//
+//                //sleep(1);
+//
+//            });
+
+        }
     }
 }
