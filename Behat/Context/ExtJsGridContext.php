@@ -148,6 +148,18 @@ JS;
     }
 
     /**
+     * @Then grid :tid must contain at least :rowsCount rows
+     */
+    public function gridMustContainAtLeastNRows($tid, $rowsCount)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $rowsCount) {
+            $query = "grid[tid=$tid]";
+
+            Assert::assertGreaterThanOrEqual($rowsCount, $q->runWhenComponentAvailable($query, 'return firstCmp.getStore().getCount();'));
+        });
+    }
+
+    /**
      * @Then grid :tid must contain a row with value :expectedValue
      */
     public function gridMustContainRowWithValue($tid, $expectedValue)
