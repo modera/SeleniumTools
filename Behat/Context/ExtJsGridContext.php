@@ -342,6 +342,114 @@ JS;
     }
 
     /**
+     * @When in grid :tid I click a column :columnLabel where one of the cells contain strict match :expectedText text
+     */
+    public function inGridIClickCellWhereOneOfTheCellsContainStrictMatchOfText($tid, $columnLabel, $expectedText)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $columnLabel) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var view = grid.getView();
+var store = grid.getStore();
+var columns = grid.query("gridcolumn");
+
+var rowVerticalPosition = -1;
+Ext.each(columns, function(column) {
+    rowVerticalPosition = store.find(column.dataIndex, '%expectedText%', 0, false, false, true);
+    if (-1 != rowVerticalPosition) {
+        return false;
+    }
+});
+
+var column = grid.down("gridcolumn[text=%columnLabel%]");
+var cellCssSelector = view.getCellSelector(column);
+var cell = Ext.query(cellCssSelector)[rowVerticalPosition];
+
+return cell.id;
+JS;
+            $js = str_replace(['%expectedText%', '%columnLabel%'], [$expectedText, $columnLabel], $js);
+
+            $domId = $q->runWhenComponentAvailable("grid[tid=$tid] ", $js);
+
+            $admin->findElement(By::id($domId))->click();
+        });
+    }
+
+    /**
+     * @When in grid :tid I see a column :columnLabel where one of the cells contain strict match :expectedText text and it is checked checkbox
+     * @When in grid :tid I see that :columnLabel group has permission :expectedText
+     */
+    public function inGridISeeCellWhereOneOfTheCellsContainStrictMatchOfTextAndChecked($tid, $columnLabel, $expectedText)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $columnLabel) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var view = grid.getView();
+var store = grid.getStore();
+var columns = grid.query("gridcolumn");
+
+var rowVerticalPosition = -1;
+Ext.each(columns, function(column) {
+    rowVerticalPosition = store.find(column.dataIndex, '%expectedText%', 0, false, false, true);
+    if (-1 != rowVerticalPosition) {
+        return false;
+    }
+});
+
+var column = grid.down("gridcolumn[text=%columnLabel%]");
+var cellCssSelector = view.getCellSelector(column);
+var cell = Ext.query(cellCssSelector)[rowVerticalPosition];
+
+return cell.id;
+JS;
+            $js = str_replace(['%expectedText%', '%columnLabel%'], [$expectedText, $columnLabel], $js);
+
+            $domId = $q->runWhenComponentAvailable("grid[tid=$tid] ", $js);
+            $checked = $admin->findElement(By::cssSelector('#'.$domId.' div img'))->getAttribute('class');
+            var_dump($checked);
+            var_dump('assertContains = x-grid-checkcolumn-checked');
+            Assert::assertContains('x-grid-checkcolumn-checked', $checked);
+        });
+    }
+
+    /**
+     * @When in grid :tid I see a column :columnLabel where one of the cells contain strict match :expectedText text and it is unchecked checkbox
+     * @When in grid :tid I see that :columnLabel group has not permission :expectedText
+     */
+    public function inGridISeeCellWhereOneOfTheCellsContainStrictMatchOfTextAndNotChecked($tid, $columnLabel, $expectedText)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $columnLabel) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var view = grid.getView();
+var store = grid.getStore();
+var columns = grid.query("gridcolumn");
+
+var rowVerticalPosition = -1;
+Ext.each(columns, function(column) {
+    rowVerticalPosition = store.find(column.dataIndex, '%expectedText%', 0, false, false, true);
+    if (-1 != rowVerticalPosition) {
+        return false;
+    }
+});
+
+var column = grid.down("gridcolumn[text=%columnLabel%]");
+var cellCssSelector = view.getCellSelector(column);
+var cell = Ext.query(cellCssSelector)[rowVerticalPosition];
+
+return cell.id;
+JS;
+            $js = str_replace(['%expectedText%', '%columnLabel%'], [$expectedText, $columnLabel], $js);
+
+            $domId = $q->runWhenComponentAvailable("grid[tid=$tid] ", $js);
+            $checked = $admin->findElement(By::cssSelector('#'.$domId.' div img'))->getAttribute('class');
+            var_dump($checked);
+            var_dump('assertContains = x-grid-checkcolumn-checked');
+            Assert::assertNotContains('x-grid-checkcolumn-checked', $checked);
+        });
+    }    
+    
+    /**
      * @Then grid :tid must contain :rowsCount rows
      */
     public function gridMustContainRows($tid, $rowsCount)
