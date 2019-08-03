@@ -195,6 +195,20 @@ class MJRContext extends HarnessAwareContext
     }
 
     /**
+     * @Then confirmation window is visible
+     * @Then message box is visible
+     * @Then alert window is visible
+     */
+    public function messageboxIsVisible()
+    {
+        $this->runActiveActor(function($admin, $actor, $backend, ExtDeferredQueryHandler $q) {
+            $q->waitUntilComponentAvailable("messagebox");
+
+            sleep(1);
+        });
+    }
+
+    /**
      * @When view :tid is not visible
      * @When panel :tid is not visible
      * @When grid :tid is not visible

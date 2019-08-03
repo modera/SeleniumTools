@@ -580,6 +580,28 @@ JS;
     }
 
     /**
+     * @Then in grid :tid I see piece of text :expectedText in row :name
+     */
+    public function inGridISeePieceOfTextPropertyValue($tid, $expectedText, $name)
+    {
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $name) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var store = grid.getStore();
+return store.findRecord('name', '%name%').get('value');
+
+JS;
+            $js = str_replace(['%name%'], [$name], $js);
+
+            $value = $q->runWhenComponentAvailable("propertygrid[tid=$tid]", $js);
+
+            Assert::assertTrue(false !== strpos($value, $expectedText));
+
+        });
+    }
+
+    /**
      * @Then in grid :tid I see date :expectedText in row :name
      */
     public function inGridISeeDateValue($tid, $expectedText, $name)
