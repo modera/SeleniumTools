@@ -518,6 +518,47 @@ JS;
     }
 
     /**
+     * @Then I see a piece of text matched to :pattern
+     */
+    public function iSeePieceOfTextMatchedTo($pattern)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin) use($pattern) {
+
+            $pattern = preg_replace_callback('/([^*])/', function($m) {
+                return preg_quote($m[1],"/");
+            }, $pattern);
+            $pattern = str_replace('*', '.*', $pattern);
+            Assert::assertTrue((bool) preg_match('/' . $pattern . '/i', $admin->getPageSource()));
+        });
+    }
+
+    /**
+     * @Then I do not see a piece of text matched to :pattern
+     */
+    public function iDoNotSeePieceOfTextMatchedTo($pattern)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin) use($pattern) {
+
+            $pattern = preg_replace_callback('/([^*])/', function($m) {
+                return preg_quote($m[1],"/");
+            }, $pattern);
+            $pattern = str_replace('*', '.*', $pattern);
+
+            Assert::assertFalse((bool) preg_match('/' . $pattern . '/i', $admin->getPageSource()));
+        });
+    }
+
+    /**
+     * @Then I do not see a piece of text :text
+     */
+    public function iDoNotSeePieceOfText($text)
+    {
+        $this->runActiveActor(function(RemoteWebDriver $admin) use($text) {
+            Assert::assertNotContains($text, $admin->getPageSource());
+        });
+    }
+
+    /**
      * @When I authenticate as :username with password :password
      * @When I login as :username with password :password
      */

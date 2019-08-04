@@ -472,9 +472,10 @@ JS;
     /**
      * @Then in grid :tid I change :expectedText to :value
      */
-    public function inGridISetPropertyValue($tid, $expectedText, $value)
+    public function iSetPropertyValue($tid, $expectedText, $value)
     {
-        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $value) {
+
+         $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($tid, $expectedText, $value) {
             $js = <<<'JS'
 var grid = firstCmp;
 var view = grid.getView();
@@ -488,10 +489,31 @@ if (isRowFound) {
 } else {
     return -1;
 }
+
 JS;
+
+            $jsChange = <<<JS
+firstCmp = firstCmp.field;
+if (firstCmp && (firstCmp.xtype == 'combobox' || firstCmp.xtype == 'combo')) {
+    var combo = firstCmp;
+    var store = combo.getStore();
+    var record = store.findRecord(combo.displayField, '%expectedValue%');
+    if (!record) {
+        throw "Unable to find a record where option value is equal to '%expectedValue%'." ;
+    }
+    combo.select(record);
+    return true;
+} else {
+    return false;
+}
+JS;
+            $jsChange = str_replace(['%expectedValue%'], [$value], $jsChange);
+
+
+
             $js = str_replace(['%expectedText%'], [$expectedText], $js);
 
-            $domId = $q->runWhenComponentAvailable("propertygrid[tid=$tid] ", $js);
+            $domId = $q->runWhenComponentAvailable("grid[tid=$tid] ", $js);
             Assert::assertNotEquals(-1, $domId);
 
             $el = $admin->findElement(By::id($domId));
@@ -500,9 +522,86 @@ JS;
 
             sleep(1);
 
-            $admin->switchTo()->activeElement()->clear();
 
-            $admin->getKeyboard()->sendKeys($value);
+            $isEditorCombo = $q->runWhenComponentAvailable("editor[editing=true]", $jsChange);
+
+            if (!$isEditorCombo) {
+                // true
+                $admin->switchTo()->activeElement()->clear();
+                $admin->getKeyboard()->sendKeys($value);
+            }
+
+            $admin->getKeyboard()
+                ->sendKeys(array(
+                    WebDriverKeys::ENTER,
+                ));
+
+            sleep(1);
+
+        });
+    }
+
+    /**
+     * @Then in settings I change :expectedText to :value
+     */
+    public function inSettingsISetPropertyValue($expectedText, $value)
+    {
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($expectedText, $value) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var view = grid.getView();
+var store = grid.getStore();
+
+var rowPosition = store.find('readableName', '%expectedText%', 0, true);
+
+var isRowFound = -1 != rowPosition;
+if (isRowFound) {
+    return Ext.query('#'+grid.el.dom.id+' '+view.getDataRowSelector())[rowPosition].id;
+} else {
+    return -1;
+}
+
+JS;
+
+            $jsChange = <<<JS
+firstCmp = firstCmp.field;
+if (firstCmp && (firstCmp.xtype == 'combobox' || firstCmp.xtype == 'combo')) {
+    var combo = firstCmp;
+    var store = combo.getStore();
+    var record = store.findRecord(combo.displayField, '%expectedValue%');
+    if (!record) {
+        throw "Unable to find a record where option value is equal to '%expectedValue%'." ;
+    }
+    combo.select(record);
+    return true;
+} else {
+    return false;
+}
+JS;
+            $jsChange = str_replace(['%expectedValue%'], [$value], $jsChange);
+
+
+
+            $js = str_replace(['%expectedText%'], [$expectedText], $js);
+
+            $domId = $q->runWhenComponentAvailable("modera-configutils-propertiesgrid", $js);
+            Assert::assertNotEquals(-1, $domId);
+
+            $el = $admin->findElement(By::id($domId));
+            $el->getLocationOnScreenOnceScrolledIntoView();
+            $el->click();
+
+            sleep(1);
+
+
+            $isEditorCombo = $q->runWhenComponentAvailable("editor[editing=true]", $jsChange);
+
+            if (!$isEditorCombo) {
+                // true
+                $admin->switchTo()->activeElement()->clear();
+                $admin->getKeyboard()->sendKeys($value);
+            }
 
             $admin->getKeyboard()
                 ->sendKeys(array(
@@ -580,6 +679,29 @@ JS;
     }
 
     /**
+     * @Then in settings I see :expectedText in row :name
+     * @Then in settings I see :expectedText as value for :name
+     */
+    public function inSettingsISeePropertyValue($expectedText, $name)
+    {
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($expectedText, $name) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var store = grid.getStore();
+return store.findRecord('readableName', '%name%').get('readableValue');
+
+JS;
+            $js = str_replace(['%name%'], [$name], $js);
+
+            $value = $q->runWhenComponentAvailable("modera-configutils-propertiesgrid", $js);
+
+            Assert::assertEquals($expectedText, $value);
+
+        });
+    }
+
+    /**
      * @Then in grid :tid I see piece of text :expectedText in row :name
      */
     public function inGridISeePieceOfTextPropertyValue($tid, $expectedText, $name)
@@ -595,6 +717,29 @@ JS;
             $js = str_replace(['%name%'], [$name], $js);
 
             $value = $q->runWhenComponentAvailable("propertygrid[tid=$tid]", $js);
+
+            Assert::assertTrue(false !== strpos($value, $expectedText));
+
+        });
+    }
+
+
+    /**
+     * @Then in settings I see piece of text :expectedText in row :name
+     */
+    public function inSettingsISeePieceOfTextPropertyValue($expectedText, $name)
+    {
+
+        $this->runActiveActor(function(RemoteWebDriver $admin, $actor, $backend, ExtDeferredQueryHandler $q) use($expectedText, $name) {
+            $js = <<<'JS'
+var grid = firstCmp;
+var store = grid.getStore();
+return store.findRecord('readableName', '%name%').get('readableValue');
+
+JS;
+            $js = str_replace(['%name%'], [$name], $js);
+
+            $value = $q->runWhenComponentAvailable("modera-configutils-propertiesgrid", $js);
 
             Assert::assertTrue(false !== strpos($value, $expectedText));
 
