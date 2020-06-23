@@ -2,8 +2,10 @@
 
 namespace Modera\Component\SeleniumTools\Behat;
 
+use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Facebook\WebDriver\Remote\WebDriverBrowserType;
 use Modera\Component\SeleniumTools\Actor;
 use Modera\Component\SeleniumTools\DriverFactoryInterface;
 
@@ -65,6 +67,10 @@ class BehatDriverFactory implements DriverFactoryInterface
         $reflClass = new \ReflectionClass(DesiredCapabilities::class);
         $reflMethod = $reflClass->getMethod($driverConfig['browser']);
         $capabilities = $reflMethod->invoke(null);
+
+        $capabilities->getCapability(ChromeOptions::CAPABILITY)->addArguments(array(
+            '--window-size=1280,1000', '--accept-ssl-certs=true'
+        ));
 
         return $this->doCreateDriver($actor, $driverConfig, $capabilities);
     }
