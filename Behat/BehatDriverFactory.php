@@ -68,9 +68,12 @@ class BehatDriverFactory implements DriverFactoryInterface
         $reflMethod = $reflClass->getMethod($driverConfig['browser']);
         $capabilities = $reflMethod->invoke(null);
 
-        $capabilities->getCapability(ChromeOptions::CAPABILITY)->addArguments(array(
+        $chromeOptions = new ChromeOptions();
+        $chromeOptions->addArguments(array(
             '--window-size=1280,1000', '--accept-ssl-certs=true'
         ));
+
+        $capabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
 
         return $this->doCreateDriver($actor, $driverConfig, $capabilities);
     }
